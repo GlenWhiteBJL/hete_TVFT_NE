@@ -71,6 +71,24 @@ def statistics(times, values, tail_seconds=10, threshold=None):
     return result
 
 
+def formal_elapsed(record, t0):
+    """Use the ROS timestamp to exclude RUNNING commits before physical t0.
+
+    Nodes acknowledge RUNNING before t0 and clamp reported tau to zero while
+    waiting. That reported field cannot establish whether control has started.
+    """
+    if record.get("phase") != "RUNNING":
+        return None
+    try:
+        stamp, origin = float(record.get("stamp")), float(t0)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not np.isfinite(stamp) or not np.isfinite(origin) or stamp < origin:
+        return None
+    elapsed = stamp - origin
+    return elapsed if np.isfinite(elapsed) else None
+
+
 def load_session(directory):
     directory = Path(directory).resolve()
     metadata = json.loads((directory / "metadata.json").read_text(encoding="utf-8"))
@@ -96,6 +114,8 @@ def analyze(directory, picture_root=None, max_gap=.1, tail_seconds=10,
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    # Matplotlib 3.1 (Ubuntu 20.04) registers the 3D projection on import.
+    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
     from ne_tvft.core import MonitoringGame
     directory = Path(directory).resolve()
     metadata, all_records, malformed = load_session(directory)
@@ -118,11 +138,8 @@ def analyze(directory, picture_root=None, max_gap=.1, tail_seconds=10,
         if record["id"] not in raw:
             unknown[record["id"]] += 1
             continue
-        try:
-            tau = float(record.get("tau", record["stamp"] - t0))
-        except (TypeError, ValueError):
-            continue
-        if record.get("phase") == "RUNNING" and np.isfinite(tau) and tau >= 0:
+        tau = formal_elapsed(record, t0)
+        if tau is not None:
             record["tau"] = tau
             raw[record["id"]].append(record)
     for rows in raw.values():
@@ -458,7 +475,7 @@ def analyze(directory, picture_root=None, max_gap=.1, tail_seconds=10,
     save(fig, "12_velocity_and_altitude")
     save(figgap, "13_adaptive_gain_differences")
     metrics["figures"] = figures
-    metrics["interpretation"] = ("Only RUNNING samples with nonnegative tau enter tracking metrics. "
+    metrics["interpretation"] = ("Only RUNNING samples with finite stamp >= t0 enter tracking metrics; elapsed time is stamp - t0. "
         "Unmatched peer samples are missing; no zero filling. Recorded IMU body specific force is distinct from world "
         "kinematic acceleration and commanded acceleration. Orbit angular rate uses relative position and velocity. "
         "Settling times are sample-based and omitted for series with missing values.")
@@ -466,7 +483,7 @@ def analyze(directory, picture_root=None, max_gap=.1, tail_seconds=10,
     (output / "analysis_config.json").write_text(json.dumps({"max_gap": max_gap, "tail_seconds": tail_seconds,
         "position_threshold": position_threshold, "velocity_threshold": velocity_threshold}, indent=2)+"\n", encoding="utf-8")
     lines = ["# 实验数据分析", "", "实验目录：`{}`".format(sid), "",
-             "仅统计 RUNNING 状态且 tau >= 0 的正式控制段；停止尾段仅用于时序和数据质量展示。",
+             "仅统计 RUNNING 状态且有限时间戳 stamp >= t0 的正式控制段，统计时间为 stamp - t0；停止尾段仅用于时序和数据质量展示。",
              "UAV 圆周误差使用相对本组 UGV 的实际位置与实际速度计算；缺失或超时匹配不填零。", "",
              "| 智能体 | 正式样本 | NE 或编队位置末段最大误差 (m) | 编队速度末段最大误差 (m/s) | 限幅比例 |",
              "|---|---:|---:|---:|---:|"]

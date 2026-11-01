@@ -1,6 +1,6 @@
-# Codex 云端 ROS Noetic 验证
+# 云端 ROS Noetic 验证
 
-这些文件用于将本工程放入 Codex 云环境后，编译并运行 3 台 UGV、6 台 UAV 的 ROS 接口模拟器。当前本地开发环境是 Windows；尚未执行 Docker 构建、云端 ROS 运行或 PX4 SITL。部署文件和本地测试通过，不表示云端验证已经通过。
+这些文件用于编译并运行 3 台 UGV、6 台 UAV 的 ROS 接口模拟器。工程已在腾讯云 Ubuntu 24.04 宿主上实际构建 Noetic 容器并运行 ROS mock；普通 Ubuntu 云服务器请先看 [TENCENT_SERVER.md](TENCENT_SERVER.md)。PX4 SITL 和实物实验尚未执行。
 
 ## 云环境准备
 

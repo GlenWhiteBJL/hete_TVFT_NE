@@ -35,4 +35,4 @@
 完成后给出实际执行报告以及所有未通过项，让我检查并发布环境。发布后运行 bash cloud/run_docker.sh 80，整理 cloud-results/ 中本次记录、raw.bag、指标、图像和日志。ROS mock 不是 PX4 SITL 或实物实验。
 ```
 
-准备阶段真实测试通过后，在配置页面检查结果、保存并 Publish；新任务使用发布后的环境。当前仓库没有已通过的云端 ROS 运行报告。
+准备阶段真实测试通过后，在配置页面检查结果、保存并 Publish；新任务使用发布后的环境。本次 Codex 云环境尚未创建或发布；工程已改用独立腾讯云服务器验证，运行方式见 [TENCENT_SERVER.md](TENCENT_SERVER.md)。

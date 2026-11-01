@@ -2,7 +2,7 @@
 
 本工程依据草稿第二、三章和“拟定技术方案”聊天中的实体配置实现。三台麦克纳姆轮无人车作为一阶领导者，六架无人机作为二阶跟随者；三个小队通过环境监测位置博弈选择工作位置，两架无人机相对本组车辆保持同半径、同角速度、相差 180 度的期望圆周运动。
 
-本次交付包含 ROS Noetic/catkin 工程、真实算法的离线动力学示例、ROS 接口模拟器、状态机、异步数据记录与独立分析程序。开发主机是 Windows，未安装 rospy/catkin/PX4，因此离线算法和协议测试不表示 catkin 编译、PX4 SITL 或实物飞行已经通过。
+本次交付包含 ROS Noetic/catkin 工程、真实算法的离线动力学示例、ROS 接口模拟器、状态机、异步数据记录与独立分析程序。工程已在腾讯云 Ubuntu 24.04 宿主的 Ubuntu 20.04 / ROS Noetic Docker 环境中完成 catkin 编译并运行 ROS mock。云服务器用法见 [cloud/TENCENT_SERVER.md](cloud/TENCENT_SERVER.md)。PX4 SITL 和实物飞行尚未执行。
 
 ## 1. 配置与实体
 
@@ -48,7 +48,7 @@ python -B -m unittest discover -s tests -v
 
 ## 3. Ubuntu 20.04 / ROS Noetic 安装
 
-如在 Codex 云环境执行，先看 [cloud/README.md](cloud/README.md)。其中提供固定 Noetic 环境的 Dockerfile 和自动完成 ROS mock 全流程、数据核验及绘图的入口。云环境必须先能读取本工程仓库并完成发布；当前交付没有附上已通过的云端运行报告。
+如在 Ubuntu 云服务器执行，先看 [cloud/TENCENT_SERVER.md](cloud/TENCENT_SERVER.md)。其中使用固定 Noetic 环境的 Dockerfile，自动完成 ROS mock 全流程、数据核验及绘图。Codex 云环境的独立配置方式保留在 [cloud/README.md](cloud/README.md)。
 
 将整个目录作为一个 catkin package 放入工作空间 `src`。例如：
 
@@ -155,7 +155,7 @@ f_i = a_i/2 ||x_i-c_i||^2 + eta_i/2 ||x_i-s_i||^2
 
 测量加速度区分：速度差分的世界系加速度估计、IMU 原始机体系数据、理论加速度和下发加速度。IMU 的具体重力处理取决于实际驱动语义，本程序不把原始读数直接当作世界系运动学加速度。
 
-收到停止后，记录制动与保持尾段；分析只对正式控制段统计。程序保存了停止模式下实际 setpoint，`input_applied` 的加速度分量在非加速度模式中为零不表示无人机真实加速度为零。
+收到停止后，记录制动与保持尾段；分析只对 `phase=RUNNING` 且实际时间戳 `stamp >= t0` 的正式控制段统计，横轴使用 `stamp-t0`。提前提交 RUNNING 时、尚在等待未来 t0 的样本不进入正式统计。程序保存了停止模式下实际 setpoint，`input_applied` 的加速度分量在非加速度模式中为零不表示无人机真实加速度为零。
 
 ```bash
 python scripts/analyze_experiment.py output/<实验时间> --picture-root picture
