@@ -4,6 +4,8 @@
 
 ## 云环境准备
 
+本次指定仓库为 `GlenWhiteBJL/hete_TVFT_NE`，工程位于仓库根目录。具体环境字段和可直接粘贴的准备请求见 [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md)。
+
 1. 将本工程源文件放到你指定的 GitHub 仓库，保留本目录结构。无需上传 `output/`、`picture/` 或旧的 ZIP 文件。专用仓库的根目录可以直接是本工程。
 2. 在 **Settings > Codex Cloud > Environments** 创建环境，选择该仓库。已有环境也必须能读取本工程。
 3. 让环境准备阶段提供 Linux、可访问的本地 Docker daemon 和 BuildKit。这里用容器固定 Ubuntu 20.04 / Python 3.8 / ROS Noetic，不能假定云主机自身是 Ubuntu 20.04。
