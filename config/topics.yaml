@@ -1,0 +1,242 @@
+# Replace topic names, message types and transforms with the measured setup.
+robots:
+  ugv1:
+    kind: ugv
+    pose_topic: /ugv1/pose
+    pose_type: PoseStamped
+    velocity_topic: /ugv1/twist
+    velocity_type: TwistStamped
+    imu_topic: /ugv1/imu
+    pose_frame: map
+    velocity_frame: world
+    cmd_frame: body
+    transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    setpoint_transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    yaw: 0.0
+    command_topic: /ugv1/cmd_vel
+  ugv2:
+    kind: ugv
+    pose_topic: /ugv2/pose
+    pose_type: PoseStamped
+    velocity_topic: /ugv2/twist
+    velocity_type: TwistStamped
+    imu_topic: /ugv2/imu
+    pose_frame: map
+    velocity_frame: world
+    cmd_frame: body
+    transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    setpoint_transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    yaw: 0.0
+    command_topic: /ugv2/cmd_vel
+  ugv3:
+    kind: ugv
+    pose_topic: /ugv3/pose
+    pose_type: PoseStamped
+    velocity_topic: /ugv3/twist
+    velocity_type: TwistStamped
+    imu_topic: /ugv3/imu
+    pose_frame: map
+    velocity_frame: world
+    cmd_frame: body
+    transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    setpoint_transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    yaw: 0.0
+    command_topic: /ugv3/cmd_vel
+  uav1:
+    kind: uav
+    pose_topic: /uav1/mavros/local_position/pose
+    pose_type: PoseStamped
+    velocity_topic: /uav1/mavros/local_position/velocity_local
+    velocity_type: TwistStamped
+    imu_topic: /uav1/mavros/imu/data
+    pose_frame: map
+    velocity_frame: world
+    cmd_frame: world
+    transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    setpoint_transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    yaw: 0.0
+    command_topic: /uav1/mavros/setpoint_raw/local
+    state_topic: /uav1/mavros/state
+    extended_state_topic: /uav1/mavros/extended_state
+    arming_service: /uav1/mavros/cmd/arming
+    mode_service: /uav1/mavros/set_mode
+  uav2:
+    kind: uav
+    pose_topic: /uav2/mavros/local_position/pose
+    pose_type: PoseStamped
+    velocity_topic: /uav2/mavros/local_position/velocity_local
+    velocity_type: TwistStamped
+    imu_topic: /uav2/mavros/imu/data
+    pose_frame: map
+    velocity_frame: world
+    cmd_frame: world
+    transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    setpoint_transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    yaw: 0.0
+    command_topic: /uav2/mavros/setpoint_raw/local
+    state_topic: /uav2/mavros/state
+    extended_state_topic: /uav2/mavros/extended_state
+    arming_service: /uav2/mavros/cmd/arming
+    mode_service: /uav2/mavros/set_mode
+  uav3:
+    kind: uav
+    pose_topic: /uav3/mavros/local_position/pose
+    pose_type: PoseStamped
+    velocity_topic: /uav3/mavros/local_position/velocity_local
+    velocity_type: TwistStamped
+    imu_topic: /uav3/mavros/imu/data
+    pose_frame: map
+    velocity_frame: world
+    cmd_frame: world
+    transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    setpoint_transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    yaw: 0.0
+    command_topic: /uav3/mavros/setpoint_raw/local
+    state_topic: /uav3/mavros/state
+    extended_state_topic: /uav3/mavros/extended_state
+    arming_service: /uav3/mavros/cmd/arming
+    mode_service: /uav3/mavros/set_mode
+  uav4:
+    kind: uav
+    pose_topic: /uav4/mavros/local_position/pose
+    pose_type: PoseStamped
+    velocity_topic: /uav4/mavros/local_position/velocity_local
+    velocity_type: TwistStamped
+    imu_topic: /uav4/mavros/imu/data
+    pose_frame: map
+    velocity_frame: world
+    cmd_frame: world
+    transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    setpoint_transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    yaw: 0.0
+    command_topic: /uav4/mavros/setpoint_raw/local
+    state_topic: /uav4/mavros/state
+    extended_state_topic: /uav4/mavros/extended_state
+    arming_service: /uav4/mavros/cmd/arming
+    mode_service: /uav4/mavros/set_mode
+  uav5:
+    kind: uav
+    pose_topic: /uav5/mavros/local_position/pose
+    pose_type: PoseStamped
+    velocity_topic: /uav5/mavros/local_position/velocity_local
+    velocity_type: TwistStamped
+    imu_topic: /uav5/mavros/imu/data
+    pose_frame: map
+    velocity_frame: world
+    cmd_frame: world
+    transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    setpoint_transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    yaw: 0.0
+    command_topic: /uav5/mavros/setpoint_raw/local
+    state_topic: /uav5/mavros/state
+    extended_state_topic: /uav5/mavros/extended_state
+    arming_service: /uav5/mavros/cmd/arming
+    mode_service: /uav5/mavros/set_mode
+  uav6:
+    kind: uav
+    pose_topic: /uav6/mavros/local_position/pose
+    pose_type: PoseStamped
+    velocity_topic: /uav6/mavros/local_position/velocity_local
+    velocity_type: TwistStamped
+    imu_topic: /uav6/mavros/imu/data
+    pose_frame: map
+    velocity_frame: world
+    cmd_frame: world
+    transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    setpoint_transform:
+      yaw: 0.0
+      translation:
+      - 0.0
+      - 0.0
+      - 0.0
+    yaw: 0.0
+    command_topic: /uav6/mavros/setpoint_raw/local
+    state_topic: /uav6/mavros/state
+    extended_state_topic: /uav6/mavros/extended_state
+    arming_service: /uav6/mavros/cmd/arming
+    mode_service: /uav6/mavros/set_mode

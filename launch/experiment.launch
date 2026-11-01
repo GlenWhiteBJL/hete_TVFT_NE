@@ -1,0 +1,80 @@
+<launch>
+  <arg name="mock" default="true"/>
+  <arg name="allow_hardware" default="false"/>
+  <arg name="config" default="$(find ne_tvft_experiment)/config/experiment.yaml"/>
+  <arg name="topics" default="$(find ne_tvft_experiment)/config/topics.yaml"/>
+  <arg name="output_root" default="$(find ne_tvft_experiment)/output"/>
+  <arg name="picture_root" default="$(find ne_tvft_experiment)/picture"/>
+  <rosparam command="load" file="$(arg config)" ns="/ne_tvft/config"/>
+  <rosparam command="load" file="$(arg topics)" ns="/ne_tvft/config"/>
+  <param name="/ne_tvft/config/logging/output_root" value="$(arg output_root)"/>
+  <param name="/ne_tvft/config/logging/picture_root" value="$(arg picture_root)"/>
+  <node pkg="ne_tvft_experiment" type="supervisor_node.py" name="supervisor" output="screen" required="true"/>
+  <node pkg="ne_tvft_experiment" type="recorder_node.py" name="recorder" output="screen" required="true">
+    <param name="mock" value="$(arg mock)"/>
+  </node>
+  <node if="$(arg mock)" pkg="ne_tvft_experiment" type="mock_fleet.py" name="mock_fleet" output="screen" required="true"/>
+  <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_ugv1" output="screen" required="true">
+    <param name="agent_id" value="ugv1"/>
+    <param name="config_file" value="$(arg config)"/>
+    <param name="topics_file" value="$(arg topics)"/>
+    <param name="mock" value="$(arg mock)"/>
+    <param name="allow_hardware" value="$(arg allow_hardware)"/>
+  </node>
+  <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_ugv2" output="screen" required="true">
+    <param name="agent_id" value="ugv2"/>
+    <param name="config_file" value="$(arg config)"/>
+    <param name="topics_file" value="$(arg topics)"/>
+    <param name="mock" value="$(arg mock)"/>
+    <param name="allow_hardware" value="$(arg allow_hardware)"/>
+  </node>
+  <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_ugv3" output="screen" required="true">
+    <param name="agent_id" value="ugv3"/>
+    <param name="config_file" value="$(arg config)"/>
+    <param name="topics_file" value="$(arg topics)"/>
+    <param name="mock" value="$(arg mock)"/>
+    <param name="allow_hardware" value="$(arg allow_hardware)"/>
+  </node>
+  <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav1" output="screen" required="true">
+    <param name="agent_id" value="uav1"/>
+    <param name="config_file" value="$(arg config)"/>
+    <param name="topics_file" value="$(arg topics)"/>
+    <param name="mock" value="$(arg mock)"/>
+    <param name="allow_hardware" value="$(arg allow_hardware)"/>
+  </node>
+  <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav2" output="screen" required="true">
+    <param name="agent_id" value="uav2"/>
+    <param name="config_file" value="$(arg config)"/>
+    <param name="topics_file" value="$(arg topics)"/>
+    <param name="mock" value="$(arg mock)"/>
+    <param name="allow_hardware" value="$(arg allow_hardware)"/>
+  </node>
+  <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav3" output="screen" required="true">
+    <param name="agent_id" value="uav3"/>
+    <param name="config_file" value="$(arg config)"/>
+    <param name="topics_file" value="$(arg topics)"/>
+    <param name="mock" value="$(arg mock)"/>
+    <param name="allow_hardware" value="$(arg allow_hardware)"/>
+  </node>
+  <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav4" output="screen" required="true">
+    <param name="agent_id" value="uav4"/>
+    <param name="config_file" value="$(arg config)"/>
+    <param name="topics_file" value="$(arg topics)"/>
+    <param name="mock" value="$(arg mock)"/>
+    <param name="allow_hardware" value="$(arg allow_hardware)"/>
+  </node>
+  <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav5" output="screen" required="true">
+    <param name="agent_id" value="uav5"/>
+    <param name="config_file" value="$(arg config)"/>
+    <param name="topics_file" value="$(arg topics)"/>
+    <param name="mock" value="$(arg mock)"/>
+    <param name="allow_hardware" value="$(arg allow_hardware)"/>
+  </node>
+  <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav6" output="screen" required="true">
+    <param name="agent_id" value="uav6"/>
+    <param name="config_file" value="$(arg config)"/>
+    <param name="topics_file" value="$(arg topics)"/>
+    <param name="mock" value="$(arg mock)"/>
+    <param name="allow_hardware" value="$(arg allow_hardware)"/>
+  </node>
+</launch>

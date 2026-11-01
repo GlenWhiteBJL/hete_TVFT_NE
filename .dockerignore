@@ -1,0 +1,24 @@
+# Whitelist only sources needed by the runtime image. No experiment recordings,
+# local secrets, repository metadata, or downloaded archives enter the context.
+**
+!CMakeLists.txt
+!package.xml
+!setup.py
+!requirements.txt
+!src/
+!src/**
+!scripts/
+!scripts/**
+!config/
+!config/**
+!launch/
+!launch/**
+!tests/
+!tests/**
+!cloud/
+!cloud/Dockerfile
+!cloud/run_in_container.sh
+**/__pycache__/
+**/__pycache__/**
+**/*.pyc
+**/*.pyo
