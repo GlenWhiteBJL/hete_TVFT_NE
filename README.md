@@ -1,6 +1,6 @@
 # 3 UGV + 6 UAV：环境监测 NE 与圆周 TVFT 实验
 
-当前分支加入可配置通信时延及离线效果对照，用法和验证范围见 [COMMUNICATION_DELAY.md](COMMUNICATION_DELAY.md)。下述既有服务器验证属于 main 的无时延版本，不能作为本分支时延工况已通过 ROS 验证的证据。
+当前分支加入可配置通信时延及效果对照，用法见 [COMMUNICATION_DELAY.md](COMMUNICATION_DELAY.md)。已在腾讯云服务器完成本分支的截断正态随机时延 ROS mock 与无时延对照，实际分布和结果见 [NORMAL_ROS_TEST.md](NORMAL_ROS_TEST.md)。下述既有 main 验证与本次时延分支验证分别记录。
 
 本工程依据草稿第二、三章和“拟定技术方案”聊天中的实体配置实现。三台麦克纳姆轮无人车作为一阶领导者，六架无人机作为二阶跟随者；三个小队通过环境监测位置博弈选择工作位置，两架无人机相对本组车辆保持同半径、同角速度、相差 180 度的期望圆周运动。
 

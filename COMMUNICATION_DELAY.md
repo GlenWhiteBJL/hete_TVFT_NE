@@ -6,6 +6,14 @@ ROS 节点在接收后排队，到期才释放数据，不阻塞回调或控制�
 
 ## ROS mock 用法
 
+正态随机时延工况使用 `communication_normal.yaml`：参数均值 50 ms、标准差 15 ms、在 0–100 ms 之间拒绝采样得到截断正态分布（不是把越界值钳到端点）。固定随机种子保证每条有向边的抽样序列可复现，操作系统调度仍可能使完整轨迹略有不同。
+
+```bash
+sudo env NE_TVFT_DELAY_PROFILE=communication_normal.yaml bash cloud/run_docker.sh 80
+```
+
+可设置 `distribution: normal`、`delay_s`（分布均值参数）、`std_s`、`min_delay_s`、`max_delay_s`。原 uniform 配置继续表示均匀抖动，fixed 表示恒定值。截断后的实际矩应以日志为准。通信诊断保存每条有向边全部生成注入的计数、一二阶矩、极值和20个区间的直方图，包含后来因乱序而丢弃的包；不能只使用每个控制 tick 最后一个交付包推断抽样分布。
+
 默认 profile 关闭注入。手动启动 50 ms 工况：
 
 ```bash

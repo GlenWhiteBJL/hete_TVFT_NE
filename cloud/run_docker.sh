@@ -9,7 +9,7 @@ fi
 duration="${1:-20}"
 delay_profile="${NE_TVFT_DELAY_PROFILE:-communication_none.yaml}"
 case "$delay_profile" in
-    communication_none.yaml|communication_20ms.yaml|communication_50ms.yaml|communication_100ms.yaml) ;;
+    communication_none.yaml|communication_20ms.yaml|communication_50ms.yaml|communication_100ms.yaml|communication_normal.yaml) ;;
     *) printf 'Unknown communication profile\n' >&2; exit 2 ;;
 esac
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"

@@ -10,6 +10,28 @@ from ne_tvft.communication import DelayBuffer
 
 
 class CommunicationTests(unittest.TestCase):
+    def test_normal_is_bounded_reproducible_with_expected_moments(self):
+        settings={"enabled":True,"distribution":"normal","delay_s":.05,"std_s":.015,
+                  "max_delay_s":.1,"seed":15}
+        q, repeat=DelayBuffer(settings,"b"), DelayBuffer(settings,"b")
+        values=[]
+        for i in range(3000):
+            q.push("a",{},float(i)); repeat.push("a",{},float(i))
+            self.assertEqual(q.pending[-1],repeat.pending[-1])
+            q.release(i+1.); repeat.release(i+1.)
+        stat=q.diagnostics()["generated_per_link"]["a->b"]
+        mean=stat["sum_s"]/stat["count"]
+        std=(stat["sum_sq_s2"]/stat["count"]-mean**2)**.5
+        self.assertLess(abs(mean-.05),.001)
+        self.assertLess(abs(std-.015),.001)
+        self.assertGreater(stat["min_s"],0.)
+        self.assertLess(stat["max_s"],.1)
+        self.assertEqual(sum(stat["histogram"]),3000)
+
+    def test_normal_invalid_bounds_rejected(self):
+        with self.assertRaises(ValueError):
+            DelayBuffer({"distribution":"normal","delay_s":.2,"max_delay_s":.1})
+
     def test_boundary_and_original_timestamp_and_receipt(self):
         queue = DelayBuffer({"enabled": True, "delay_s": .05}, "uav1")
         packet = {"stamp": 20., "w": [1., 2.]}
