@@ -106,6 +106,7 @@ printf 'Starting 3 UGV + 6 UAV ROS mock fleet...\n'
 set +m
 setsid roslaunch ne_tvft_experiment experiment.launch \
     mock:=true allow_hardware:=false \
+    "communication:=$PWD/config/${NE_TVFT_DELAY_PROFILE:-communication_none.yaml}" \
     "output_root:=$run_dir/output" "picture_root:=$run_dir/picture" \
     >"$run_dir/roslaunch.log" 2>&1 &
 launch_pid=$!

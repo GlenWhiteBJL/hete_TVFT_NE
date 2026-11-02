@@ -22,6 +22,7 @@ from .adapters import (PlanarTransform, finite_vector, quaternion_yaw, rotation,
     ugv_command, position_target, velocity_target, acceleration_target,
     height_acceleration, limit_norm, sample_is_fresh, DerivativeEstimate, StartGate)
 from .core import LeaderController, FollowerController, circle
+from .communication import DelayBuffer
 
 PHASES = {"IDLE", "PREPARING", "READY", "ARMING", "ARMED", "TAKING_OFF", "AIRBORNE",
           "POSITIONING", "POSITIONED", "RECORDING", "SCHEDULED", "RUNNING", "STOPPING",
@@ -92,6 +93,8 @@ class AgentNode:
                            if self.is_uav else LeaderController(self.config, self.group))
         self.controller_initialized = False
         self.neighbors = {}
+        self.communication = DelayBuffer(self.config.get("communication"), self.agent_id)
+        self.communication_out_of_order = 0
         self.fault = ""
         self.last_tick = None
         self.start_offset = None
@@ -243,6 +246,8 @@ class AgentNode:
                             raise ValueError("Scheduled without own pose")
                         self._reset_controller()
                         self.neighbors.clear()
+                        self.communication.clear()
+                        self.communication_out_of_order = 0
                         self.start_offset = self.last_control_time = None
                         self.reference_tau = 0.0
                 elif phase == "RUNNING":
@@ -294,7 +299,12 @@ class AgentNode:
                     z = np.asarray(p["z"], dtype=float)
                     if z.shape != (len(self.config["groups"]), 2) or not np.isfinite(z).all():
                         raise ValueError("Invalid neighbor estimate array")
-                self.neighbors[agent_id] = (p, time.monotonic())
+                if (p.get("session_id") != self.session["session_id"]
+                        or abs(p["t0"]-self.session["t0"]) >= 1e-9):
+                    return
+                self.communication.push(agent_id, p, time.monotonic())
+            except OverflowError as exc:
+                self.fault = str(exc)
             except (ValueError, KeyError, TypeError, json.JSONDecodeError):
                 self.neighbors.pop(agent_id, None)
 
@@ -311,6 +321,12 @@ class AgentNode:
         return True, ""
 
     def _signals(self, now, wall):
+        for aid, packet, receipt in self.communication.release(wall):
+            old = self.neighbors.get(aid)
+            if old is None or packet["stamp"] > old[0]["stamp"]:
+                self.neighbors[aid] = (packet, receipt)
+            else:
+                self.communication_out_of_order += 1
         result, complete = {}, True
         m = len(self.config["groups"])
         for aid, index in self.expected_ids.items():
@@ -571,6 +587,8 @@ class AgentNode:
             "velocity_timestamp_origin":self.velocity_timestamp_origin,"pose_age":now-self.pose_stamp,"velocity_age":now-self.velocity_stamp,
             "velocity_header_frame":self.velocity_header_frame,
             "input_raw":raw.tolist(),"input_applied":applied.tolist(),"limited":bool(limited),"controller":controller,
+            "communication":dict(self.communication.diagnostics(), out_of_order=self.communication_out_of_order,
+                neighbor_source_age_s={aid:max(0.0,now-pair[0]["stamp"]) for aid,pair in self.neighbors.items()}),
             "start_offset_s":self.start_offset,"command_mode":mode,"setpoint":target,"fcu":self.fcu.copy(),
             "landed_state":self.landed_state,"dt":dt,"service_error":self.service_error,
             "last_service_result":self.last_service_result,"outputs_enabled":self.hardware_allowed}

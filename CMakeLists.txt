@@ -7,5 +7,6 @@ catkin_install_python(PROGRAMS
   scripts/agent_node.py scripts/supervisor_node.py scripts/recorder_node.py
   scripts/analyze_experiment.py scripts/offline_demo.py scripts/mock_fleet.py scripts/preflight.py
   scripts/smoke_mock.py
+  scripts/delay_sweep.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(DIRECTORY config launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

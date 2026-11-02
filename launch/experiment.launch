@@ -5,8 +5,10 @@
   <arg name="topics" default="$(find ne_tvft_experiment)/config/topics.yaml"/>
   <arg name="output_root" default="$(find ne_tvft_experiment)/output"/>
   <arg name="picture_root" default="$(find ne_tvft_experiment)/picture"/>
+  <arg name="communication" default="$(find ne_tvft_experiment)/config/communication_none.yaml"/>
   <rosparam command="load" file="$(arg config)" ns="/ne_tvft/config"/>
   <rosparam command="load" file="$(arg topics)" ns="/ne_tvft/config"/>
+  <rosparam command="load" file="$(arg communication)" ns="/ne_tvft/config"/>
   <param name="/ne_tvft/config/logging/output_root" value="$(arg output_root)"/>
   <param name="/ne_tvft/config/logging/picture_root" value="$(arg picture_root)"/>
   <node pkg="ne_tvft_experiment" type="supervisor_node.py" name="supervisor" output="screen" required="true"/>

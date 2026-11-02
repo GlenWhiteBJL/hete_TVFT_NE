@@ -7,6 +7,11 @@ if (( $# > 1 )); then
     exit 2
 fi
 duration="${1:-20}"
+delay_profile="${NE_TVFT_DELAY_PROFILE:-communication_none.yaml}"
+case "$delay_profile" in
+    communication_none.yaml|communication_20ms.yaml|communication_50ms.yaml|communication_100ms.yaml) ;;
+    *) printf 'Unknown communication profile\n' >&2; exit 2 ;;
+esac
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 package_root="$(cd -- "$script_dir/.." && pwd -P)"
 image="${NE_TVFT_IMAGE:-ne-tvft-noetic:local}"
@@ -76,6 +81,7 @@ printf 'Running mock workflow in an isolated container...\n'
 # No host network, published ports, GPU, privileged mode, or host ROS connection.
 # The controller, mock fleet, ROS master, and recorder share container loopback.
 docker_local run --rm --init --network none --shm-size 256m \
+    -e "NE_TVFT_DELAY_PROFILE=$delay_profile" \
     --user "$(id -u):$(id -g)" \
     --mount "type=bind,src=$artifact_root,dst=/artifacts" \
     "$image" "$duration"
