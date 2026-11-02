@@ -2,6 +2,8 @@
 
 当前分支加入可配置通信时延及效果对照，用法见 [COMMUNICATION_DELAY.md](COMMUNICATION_DELAY.md)。已在腾讯云服务器完成本分支的截断正态随机时延 ROS mock 与无时延对照，实际分布和结果见 [NORMAL_ROS_TEST.md](NORMAL_ROS_TEST.md)。下述既有 main 验证与本次时延分支验证分别记录。
 
+250 ms均值、50 ms标准差、0–500 ms截断范围的多种子/多初值设计见 [DELAY250_DESIGN.md](DELAY250_DESIGN.md)。14次腾讯云ROS运行的实际结果见 [DELAY250_RESULTS.md](DELAY250_RESULTS.md)：无时延基线2/2完成，300ms保护组0/6完成，600ms研究组6/6完成；失败与启动屏障故障均保留统计。
+
 本工程依据草稿第二、三章和“拟定技术方案”聊天中的实体配置实现。三台麦克纳姆轮无人车作为一阶领导者，六架无人机作为二阶跟随者；三个小队通过环境监测位置博弈选择工作位置，两架无人机相对本组车辆保持同半径、同角速度、相差 180 度的期望圆周运动。
 
 本次交付包含 ROS Noetic/catkin 工程、真实算法的离线动力学示例、ROS 接口模拟器、状态机、异步数据记录与独立分析程序。工程已在腾讯云 Ubuntu 24.04 宿主的 Ubuntu 20.04 / ROS Noetic Docker 环境中完成 catkin 编译并运行 ROS mock。云服务器用法见 [cloud/TENCENT_SERVER.md](cloud/TENCENT_SERVER.md)。PX4 SITL 和实物飞行尚未执行。
