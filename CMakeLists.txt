@@ -10,5 +10,6 @@ catkin_install_python(PROGRAMS
   scripts/delay_sweep.py
   scripts/compare_ros_delays.py
   scripts/make_delay_trials.py
+  scripts/run_no_timeout_trials.py scripts/summarize_no_timeout_trials.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(DIRECTORY config launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

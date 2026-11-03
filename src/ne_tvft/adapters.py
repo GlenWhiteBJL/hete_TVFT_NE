@@ -116,6 +116,15 @@ def sample_is_fresh(now, receipt_age, source_stamp, timeout, future_tolerance=0.
             and -future_tolerance <= now-source_stamp <= timeout)
 
 
+def neighbor_sample_is_usable(now, receipt_age, source_stamp, timeout):
+    """False/None disables only neighbor expiry, keeping basic timestamp validity."""
+    if timeout is not None and timeout is not False:
+        return sample_is_fresh(now, receipt_age, source_stamp, timeout)
+    return (math.isfinite(now) and math.isfinite(receipt_age) and receipt_age >= 0
+            and math.isfinite(source_stamp) and source_stamp > 0
+            and source_stamp <= now + .1)
+
+
 class DerivativeEstimate:
     """Differentiated world velocity, distinct from raw body-frame IMU force."""
     def __init__(self, maximum_gap=0.3):

@@ -10,7 +10,9 @@ runtime:
   state_timeout: 0.3
   # MAVROS state/extended_state can publish slower than pose/velocity.
   fcu_state_timeout: 3.0
-  signal_timeout: 0.3
+  # false: hold latest valid neighbor packet without an age cutoff.
+  # State, session, recorder and control-deadline protections remain enabled.
+  signal_timeout: false
   session_timeout: 0.5
   max_dt: 0.06
   position_tolerance: 0.08

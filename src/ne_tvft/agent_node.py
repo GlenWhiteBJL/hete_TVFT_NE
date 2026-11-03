@@ -20,7 +20,7 @@ from mavros_msgs.msg import State, ExtendedState, PositionTarget
 from mavros_msgs.srv import CommandBool, SetMode
 from .adapters import (PlanarTransform, finite_vector, quaternion_yaw, rotation,
     ugv_command, position_target, velocity_target, acceleration_target,
-    height_acceleration, limit_norm, sample_is_fresh, DerivativeEstimate, StartGate)
+    height_acceleration, limit_norm, sample_is_fresh, neighbor_sample_is_usable, DerivativeEstimate, StartGate)
 from .core import LeaderController, FollowerController, circle
 from .communication import DelayBuffer
 
@@ -334,7 +334,7 @@ class AgentNode:
             valid = False
             if pair is not None:
                 p, receipt = pair
-                valid = (sample_is_fresh(now, wall-receipt, p["stamp"], self.runtime["signal_timeout"])
+                valid = (neighbor_sample_is_usable(now, wall-receipt, p["stamp"], self.runtime["signal_timeout"])
                          and p.get("session_id") == self.session["session_id"]
                          and abs(p["t0"]-self.session["t0"]) < 1e-9)
             if valid:

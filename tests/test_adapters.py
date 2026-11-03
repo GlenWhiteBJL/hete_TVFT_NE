@@ -196,6 +196,8 @@ class AgentNodeTests(unittest.TestCase):
     def setUp(self):
         root=Path(__file__).resolve().parents[1]
         self.config=yaml.safe_load((root/"config/experiment.yaml").read_text(encoding="utf-8"))
+        # Existing watchdog tests explicitly exercise the optional legacy guard.
+        self.config['runtime']['signal_timeout']=.3
         self.config.update(yaml.safe_load((root/"config/topics.yaml").read_text(encoding="utf-8")))
         self.ros=fake_ros(self.config)
         self.module_patch=patch.dict(sys.modules,ros_stubs(self.ros))
