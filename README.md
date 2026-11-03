@@ -1,5 +1,6 @@
 # 3 UGV + 6 UAV：环境监测 NE 与圆周 TVFT 实验
 
+本分支的 swarm_sync_sim / PX4 三车六机接入、安装及闭环测试见 [PX4_SIM.md](PX4_SIM.md)。
 本工程依据草稿第二、三章和“拟定技术方案”聊天中的实体配置实现。三台麦克纳姆轮无人车作为一阶领导者，六架无人机作为二阶跟随者；三个小队通过环境监测位置博弈选择工作位置，两架无人机相对本组车辆保持同半径、同角速度、相差 180 度的期望圆周运动。
 
 本次交付包含 ROS Noetic/catkin 工程、真实算法的离线动力学示例、ROS 接口模拟器、状态机、异步数据记录与独立分析程序。工程已在腾讯云 Ubuntu 24.04 宿主的 Ubuntu 20.04 / ROS Noetic Docker 环境中完成 catkin 编译并运行 ROS mock。云服务器用法见 [cloud/TENCENT_SERVER.md](cloud/TENCENT_SERVER.md)。PX4 SITL 和实物飞行尚未执行。

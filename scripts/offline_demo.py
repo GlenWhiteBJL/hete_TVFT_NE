@@ -18,6 +18,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT / "src"))
 from ne_tvft.core import LeaderController, FollowerController, MonitoringGame, circle
+from ne_tvft.communication import SampledNetwork
 
 
 def jsonable(value):
@@ -47,7 +48,7 @@ def initialize(config):
     return leaders,followers,xl,xf,vf
 
 
-def snapshot(config,leaders,followers,xl,xf,vf,tau):
+def snapshot(config,leaders,followers,xl,xf,vf,tau,transport=None):
     m = len(leaders)
     leader_packets = {i:{"y":controller.y.copy(),"z":controller.z.copy()} for i,controller in enumerate(leaders)}
     # Build w from only each agent's own physical state and local reference.
@@ -64,6 +65,9 @@ def snapshot(config,leaders,followers,xl,xf,vf,tau):
     pin = np.asarray(config["topology"]["pinning"])
     for i in range(m):
         received = {k:leader_packets[k] for k in range(m) if A[i,k] > 0}
+        if transport is not None:
+            received = {k:transport.value(config["groups"][k]["leader"],config["groups"][i]["leader"],v,tau)
+                        for k,v in received.items()}
         neighbor_l.append(received)
         outputs_l.append(leaders[i].output(xl[i],received))
         group_outputs,group_neighbors = [],[]
@@ -71,6 +75,10 @@ def snapshot(config,leaders,followers,xl,xf,vf,tau):
             received_w = {k+1:group_w[i][k+1] for k in range(2) if AF[j,k] > 0}
             if pin[i,j] > 0:
                 received_w[0] = group_w[i][0]
+            if transport is not None:
+                group = config["groups"][i]
+                received_w = {k:transport.value(group["leader"] if k == 0 else group["followers"][k-1],
+                              group["followers"][j],v,tau) for k,v in received_w.items()}
             group_neighbors.append(received_w)
             group_outputs.append(followers[i][j].output(tau,xf[i,j],vf[i,j],received_w))
         outputs_f.append(group_outputs)
@@ -99,6 +107,7 @@ def simulate(config,duration,dt,out=None,session_id="offline",sample_dt=.02,appl
     if duration <= 0 or dt <= 0 or dt > .1 or not np.isfinite([duration,dt]).all():
         raise ValueError("Require positive finite duration and 0 < dt <= 0.1 seconds")
     leaders,followers,xl,xf,vf = initialize(config)
+    transport = SampledNetwork(config.get("communication", {})) if config.get("communication", {}).get("enabled",False) else None
     m = len(leaders)
     game = MonitoringGame(config)
     equilibrium = game.equilibrium()  # evaluation only; controllers do not see it.
@@ -115,7 +124,7 @@ def simulate(config,duration,dt,out=None,session_id="offline",sample_dt=.02,appl
         final_outputs = None
         # Advance with deterministic controller/communication/plant sampling.
         while True:
-            ol,of,nl,nf = snapshot(config,leaders,followers,xl,xf,vf,t)
+            ol,of,nl,nf = snapshot(config,leaders,followers,xl,xf,vf,t,transport)
             ul,uf,limited_l,limited_f = limited_inputs(config,ol,of,apply_limits)
             for i,group in enumerate(config["groups"]):
                 limited_samples[group["leader"]] += int(limited_l[i])

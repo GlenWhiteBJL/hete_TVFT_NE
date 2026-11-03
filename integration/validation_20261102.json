@@ -1,0 +1,98 @@
+{
+  "date_shanghai": "2026-11-02",
+  "branch": "PX4_sim",
+  "algorithm_base_commit": "70f5fb030260a9bc3a906c219e80b75ca7170e99",
+  "sss_upstream_commit": "4837b511c3d2bcaa36448e5e5af51335004bafd8",
+  "scope": "SSS adapted PX4 modules with quadrotor dynamics and ideal state feedback; not full PX4 firmware SITL",
+  "unit_tests_passed": 98,
+  "tail_window_s": 10,
+  "cases": [
+    {
+      "case": "no_delay",
+      "run_directory": "output/sss_run_fvJUIXH4",
+      "session_id": "20261102_222547_426296_1",
+      "success": true,
+      "duration_s": 80.0,
+      "maximum_tail_ne_error_m": 1.4741036651212025e-07,
+      "maximum_tail_formation_position_error_m": 0.0010921127887661816,
+      "maximum_tail_formation_velocity_error_m_s": 0.00019206981022971986,
+      "maximum_sample_gap_s": 0.020000000000010232,
+      "max_start_offset_s": 0.009999999999999787,
+      "formal_samples": {
+        "ugv1": 4003,
+        "uav1": 4003,
+        "uav2": 4003,
+        "ugv2": 4003,
+        "uav3": 4003,
+        "uav4": 4002,
+        "ugv3": 4003,
+        "uav5": 4003,
+        "uav6": 4003
+      },
+      "recording_complete": true,
+      "all_uavs_landed_disarmed": true,
+      "raw_bag_sha256": "3eb684de352affbf4c174792a5b76f513c7bd2805d652c065bb6c7e3f2a0fd81",
+      "telemetry_sha256": "910a67bab2f73f685880c79e72fc6a333ad9e1b22ade04434893109fb51581c9"
+    },
+    {
+      "case": "fixed_50ms",
+      "run_directory": "output/sss_run_EmZZp1IY",
+      "session_id": "20261102_222925_984172_1",
+      "success": true,
+      "duration_s": 80.0,
+      "maximum_tail_ne_error_m": 5.347090974233985e-07,
+      "maximum_tail_formation_position_error_m": 0.000913970241699124,
+      "maximum_tail_formation_velocity_error_m_s": 0.00017870495528814727,
+      "maximum_sample_gap_s": 0.020000000000010232,
+      "max_start_offset_s": 0.00999999999999801,
+      "formal_samples": {
+        "ugv1": 4003,
+        "uav1": 4003,
+        "uav2": 4003,
+        "ugv2": 4003,
+        "uav3": 4003,
+        "uav4": 4003,
+        "ugv3": 4003,
+        "uav5": 4003,
+        "uav6": 4003
+      },
+      "recording_complete": true,
+      "all_uavs_landed_disarmed": true,
+      "raw_bag_sha256": "03dc267858c4cbd61ccab1a4791fa360f5ee2f4d4d4570bcc3daa22701dc9edb",
+      "telemetry_sha256": "fe4407e539a385cd25eb0f26022e018a55722396c06eab5be235c3cdc3cf2c9c"
+    },
+    {
+      "case": "normal_50ms_std15ms",
+      "run_directory": "output/sss_run_dsMf5eGS",
+      "session_id": "20261102_223316_830578_1",
+      "success": true,
+      "duration_s": 80.0,
+      "maximum_tail_ne_error_m": 5.009709500535368e-07,
+      "maximum_tail_formation_position_error_m": 0.000921671347982319,
+      "maximum_tail_formation_velocity_error_m_s": 0.000224280643668403,
+      "maximum_sample_gap_s": 0.020000000000010232,
+      "max_start_offset_s": 0.009999999999999787,
+      "formal_samples": {
+        "ugv1": 4003,
+        "uav1": 4003,
+        "uav2": 4003,
+        "ugv2": 4003,
+        "uav3": 4003,
+        "uav4": 4003,
+        "ugv3": 4003,
+        "uav5": 4003,
+        "uav6": 4003
+      },
+      "recording_complete": true,
+      "all_uavs_landed_disarmed": true,
+      "raw_bag_sha256": "20e6a23e246cfbf5d1d1b084bc22b021e9a300dca9be83a7042bf147592d73d6",
+      "telemetry_sha256": "213478b2d5827023f38fad52e75beb1c9ad3776f291bb61554ec89f3374ce7b9"
+    }
+  ],
+  "mock_regression": {
+    "success": true,
+    "duration_s": 12,
+    "run_directory": "output/mock_regression_dTElZCVB",
+    "recording_complete": true
+  }
+}

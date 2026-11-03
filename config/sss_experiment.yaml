@@ -1,0 +1,162 @@
+hardware:
+  enabled: false
+  frames_verified: false
+  acceleration_interface_verified: false
+  firmware: SET_ACTUAL_PX4_VERSION_BEFORE_HARDWARE_USE
+world_frame: map
+runtime:
+  rate_hz: 50
+  state_timeout: 0.3
+  fcu_state_timeout: 3.0
+  signal_timeout: 0.3
+  session_timeout: 0.5
+  max_dt: 0.06
+  position_tolerance: 0.08
+  velocity_tolerance: 0.08
+  ready_dwell: 0.5
+  takeoff_speed: 0.2
+  goto_kp: 0.5
+  brake_kv: 1.0
+  offboard_warmup: 2.0
+  service_interval: 1.0
+  start_lead_seconds: 2.0
+  commit_margin: 0.2
+  transition_timeout: 60.0
+  max_run_seconds: 120.0
+limits:
+  ugv_speed: 0.3
+  uav_acceleration: 0.8
+  uav_speed: 0.6
+  z_acceleration: 0.6
+  altitude_kp: 1.0
+  altitude_kd: 1.5
+groups:
+- leader: ugv1
+  followers:
+  - uav1
+  - uav2
+  initial_xy:
+  - -1.6
+  - -1.4
+  altitude: 1.2
+- leader: ugv2
+  followers:
+  - uav3
+  - uav4
+  initial_xy:
+  - 1.6
+  - -1.4
+  altitude: 1.2
+- leader: ugv3
+  followers:
+  - uav5
+  - uav6
+  initial_xy:
+  - 0.0
+  - 1.6
+  altitude: 1.2
+topology:
+  leaders:
+  - - 0
+    - 1
+    - 0
+  - - 1
+    - 0
+    - 1
+  - - 0
+    - 1
+    - 0
+  followers:
+  - - 0
+    - 1
+  - - 1
+    - 0
+  pinning:
+  - - 1
+    - 0
+  - - 1
+    - 0
+  - - 1
+    - 0
+formation:
+  radii:
+  - 0.35
+  - 0.35
+  - 0.35
+  angular_rates:
+  - 0.1
+  - 0.1
+  - 0.1
+  phases:
+  - 0.0
+  - 0.0
+  - 0.0
+gains:
+  k_L: 0.25
+  k_1: 1.0
+  k_2: 2.0
+  lambda_leader: 1.5
+  lambda_follower: 1.5
+  kappa_alpha: 0.25
+  sigma_alpha: 1.0
+  delta_alpha: 0.5
+  alpha_initial: 2.0
+  alpha_hat_initial: 1.0
+  kappa_beta: 0.5
+  sigma_beta: 1.0
+  delta_beta: 0.5
+  beta_initial: 2.0
+  beta_hat_initial: 1.0
+monitoring:
+  hotspots:
+  - - -0.7
+    - -0.45
+  - - 0.7
+    - -0.45
+  - - 0.0
+    - 0.8
+  stations:
+  - - -1.8
+    - -1.5
+  - - 1.8
+    - -1.5
+  - - 0.0
+    - 1.8
+  task_weights:
+  - 1.0
+  - 1.1
+  - 0.9
+  station_weights:
+  - 0.1
+  - 0.12
+  - 0.1
+  overlap_weights:
+  - - 0
+    - 0.18
+    - 0.18
+  - - 0.18
+    - 0
+    - 0.18
+  - - 0.18
+    - 0.18
+    - 0
+  overlap_sigma: 1.0
+  map_bounds:
+  - -2.5
+  - 2.5
+  - -2.3
+  - 2.5
+logging:
+  output_root: output
+  picture_root: picture
+  queue_size: 10000
+  tail_seconds: 3.0
+  rosbag: true
+  bag_required: true
+  max_alignment_gap: 0.1
+simulation:
+  backend: sss
+  ground_z: 0.0
+  landing_speed: 0.2
+  upstream_commit: 4837b511c3d2bcaa36448e5e5af51335004bafd8
+  clock: registered Python time clients; 1x initial validation

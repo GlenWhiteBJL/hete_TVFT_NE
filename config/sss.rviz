@@ -1,0 +1,205 @@
+Panels:
+- Class: rviz/Displays
+  Name: Displays
+- Class: rviz/Views
+  Name: Views
+Visualization Manager:
+  Class: ''
+  Global Options:
+    Fixed Frame: map
+    Frame Rate: 30
+    Background Color: 35; 38; 45
+  Displays:
+  - Class: rviz/Grid
+    Name: Ground grid
+    Enabled: true
+    Cell Size: 0.5
+    Plane Cell Count: 30
+  - Class: rviz/RobotModel
+    Name: ugv1
+    Enabled: true
+    Robot Description: /ugv1/robot_description
+    TF Prefix: ugv1
+    Visual Enabled: true
+    Collision Enabled: false
+    Alpha: 1
+  - Class: rviz/Path
+    Name: ugv1 path
+    Enabled: true
+    Topic: /ugv1/history_path
+    Color: 230; 80; 60
+    Line Width: 0.02
+    Buffer Length: 1
+  - Class: rviz/Marker
+    Name: ugv1 label
+    Enabled: true
+    Marker Topic: /ugv1/marker_name
+  - Class: rviz/RobotModel
+    Name: uav1
+    Enabled: true
+    Robot Description: /uav1/robot_description
+    TF Prefix: uav1
+    Visual Enabled: true
+    Collision Enabled: false
+    Alpha: 1
+  - Class: rviz/Path
+    Name: uav1 path
+    Enabled: true
+    Topic: /uav1/history_path
+    Color: 230; 80; 60
+    Line Width: 0.02
+    Buffer Length: 1
+  - Class: rviz/Marker
+    Name: uav1 label
+    Enabled: true
+    Marker Topic: /uav1/marker_name
+  - Class: rviz/RobotModel
+    Name: uav2
+    Enabled: true
+    Robot Description: /uav2/robot_description
+    TF Prefix: uav2
+    Visual Enabled: true
+    Collision Enabled: false
+    Alpha: 1
+  - Class: rviz/Path
+    Name: uav2 path
+    Enabled: true
+    Topic: /uav2/history_path
+    Color: 230; 80; 60
+    Line Width: 0.02
+    Buffer Length: 1
+  - Class: rviz/Marker
+    Name: uav2 label
+    Enabled: true
+    Marker Topic: /uav2/marker_name
+  - Class: rviz/RobotModel
+    Name: ugv2
+    Enabled: true
+    Robot Description: /ugv2/robot_description
+    TF Prefix: ugv2
+    Visual Enabled: true
+    Collision Enabled: false
+    Alpha: 1
+  - Class: rviz/Path
+    Name: ugv2 path
+    Enabled: true
+    Topic: /ugv2/history_path
+    Color: 60; 170; 230
+    Line Width: 0.02
+    Buffer Length: 1
+  - Class: rviz/Marker
+    Name: ugv2 label
+    Enabled: true
+    Marker Topic: /ugv2/marker_name
+  - Class: rviz/RobotModel
+    Name: uav3
+    Enabled: true
+    Robot Description: /uav3/robot_description
+    TF Prefix: uav3
+    Visual Enabled: true
+    Collision Enabled: false
+    Alpha: 1
+  - Class: rviz/Path
+    Name: uav3 path
+    Enabled: true
+    Topic: /uav3/history_path
+    Color: 60; 170; 230
+    Line Width: 0.02
+    Buffer Length: 1
+  - Class: rviz/Marker
+    Name: uav3 label
+    Enabled: true
+    Marker Topic: /uav3/marker_name
+  - Class: rviz/RobotModel
+    Name: uav4
+    Enabled: true
+    Robot Description: /uav4/robot_description
+    TF Prefix: uav4
+    Visual Enabled: true
+    Collision Enabled: false
+    Alpha: 1
+  - Class: rviz/Path
+    Name: uav4 path
+    Enabled: true
+    Topic: /uav4/history_path
+    Color: 60; 170; 230
+    Line Width: 0.02
+    Buffer Length: 1
+  - Class: rviz/Marker
+    Name: uav4 label
+    Enabled: true
+    Marker Topic: /uav4/marker_name
+  - Class: rviz/RobotModel
+    Name: ugv3
+    Enabled: true
+    Robot Description: /ugv3/robot_description
+    TF Prefix: ugv3
+    Visual Enabled: true
+    Collision Enabled: false
+    Alpha: 1
+  - Class: rviz/Path
+    Name: ugv3 path
+    Enabled: true
+    Topic: /ugv3/history_path
+    Color: 100; 210; 100
+    Line Width: 0.02
+    Buffer Length: 1
+  - Class: rviz/Marker
+    Name: ugv3 label
+    Enabled: true
+    Marker Topic: /ugv3/marker_name
+  - Class: rviz/RobotModel
+    Name: uav5
+    Enabled: true
+    Robot Description: /uav5/robot_description
+    TF Prefix: uav5
+    Visual Enabled: true
+    Collision Enabled: false
+    Alpha: 1
+  - Class: rviz/Path
+    Name: uav5 path
+    Enabled: true
+    Topic: /uav5/history_path
+    Color: 100; 210; 100
+    Line Width: 0.02
+    Buffer Length: 1
+  - Class: rviz/Marker
+    Name: uav5 label
+    Enabled: true
+    Marker Topic: /uav5/marker_name
+  - Class: rviz/RobotModel
+    Name: uav6
+    Enabled: true
+    Robot Description: /uav6/robot_description
+    TF Prefix: uav6
+    Visual Enabled: true
+    Collision Enabled: false
+    Alpha: 1
+  - Class: rviz/Path
+    Name: uav6 path
+    Enabled: true
+    Topic: /uav6/history_path
+    Color: 100; 210; 100
+    Line Width: 0.02
+    Buffer Length: 1
+  - Class: rviz/Marker
+    Name: uav6 label
+    Enabled: true
+    Marker Topic: /uav6/marker_name
+  Tools:
+  - Class: rviz/Interact
+  - Class: rviz/MoveCamera
+  - Class: rviz/Select
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 9
+      Yaw: 0.8
+      Pitch: 0.8
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0.5
+Window Geometry:
+  Width: 1400
+  Height: 900

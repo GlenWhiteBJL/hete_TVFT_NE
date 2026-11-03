@@ -17,7 +17,7 @@ CSV_FIELDS = ["stamp", "tau", "session_id", "id", "group", "role", "phase",
               "healthy", "ready", "reason", "pose_stamp", "velocity_stamp",
               "position", "velocity", "acceleration_estimate", "acceleration_valid",
               "imu_specific_force_body", "input_raw", "input_applied", "limited",
-              "start_offset_s", "controller"]
+              "start_offset_s", "controller", "backend", "communication", "communication_clock"]
 
 
 def _default(value):

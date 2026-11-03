@@ -415,6 +415,39 @@ class AgentNodeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"UAV velocity"):
             self.module.AgentNode()
 
+    def test_sss_landing_requires_real_ground_feedback_before_disarm(self):
+        self.node.backend='sss'
+        self.sensors(position=[1,2,1.2])
+        self.session('LANDING')
+        requests=[]
+        self.node.request_service=lambda **kw:requests.append(kw)
+        target,ready,mode=self.node._uav_nonrunning('LANDING',True,True,.02,100,100,0)
+        self.assertEqual(mode,'sss_landing_position')
+        self.assertFalse(ready)
+        self.assertEqual(requests,[])
+        self.assertLess(target['position'][2],1.2)
+        self.node.position=np.array([1.,2.,0.])
+        self.node.velocity=np.zeros(3)
+        self.node.landed_state=1
+        self.node.landed_receipt=100
+        _,ready,_=self.node._uav_nonrunning('LANDING',True,True,.02,100,100,0)
+        self.assertFalse(ready)
+        self.assertEqual(requests,[{'armed':False}])
+        self.node.fcu['armed']=False
+        self.assertTrue(self.node._uav_nonrunning('LANDING',True,True,.02,100,100,0)[1])
+
+    def test_sss_disarm_job_cancelled_if_airborne_or_phase_changed(self):
+        self.node.backend='sss'
+        self.sensors(position=[0,0,1.2])
+        self.session('LANDING')
+        job=(None,False,'LANDING','test')
+        self.assertFalse(self.node._service_is_current(job))
+        self.node.position[2]=0
+        self.node.landed_state=1
+        self.assertTrue(self.node._service_is_current(job))
+        self.session('STOPPING')
+        self.assertFalse(self.node._service_is_current(job))
+
 
 if __name__=="__main__":
     unittest.main()

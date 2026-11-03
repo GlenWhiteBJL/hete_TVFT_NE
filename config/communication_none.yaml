@@ -1,0 +1,7 @@
+communication:
+  enabled: false
+  delay_s: 0.0
+  jitter_s: 0.0
+  seed: 7
+  max_pending: 4096
+  links: {}

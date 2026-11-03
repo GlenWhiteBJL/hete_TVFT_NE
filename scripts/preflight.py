@@ -17,7 +17,11 @@ def main():
     p.add_argument('--topics',type=Path,default=base/'config/topics.yaml')
     p.add_argument('--ros',action='store_true')
     p.add_argument('--hardware',action='store_true')
+    p.add_argument('--backend',choices=['mock','sss','hardware'])
     args=p.parse_args()
+    backend=args.backend or ('hardware' if args.hardware else 'mock')
+    if args.hardware and backend!='hardware':
+        raise ValueError('--hardware conflicts with --backend')
     c=yaml.safe_load(args.config.read_text());c.update(yaml.safe_load(args.topics.read_text()))
     validate_topology(c);game=MonitoringGame(c)
     ids=agent_ids(c)
@@ -34,15 +38,17 @@ def main():
             raise ValueError('UAV body velocity requires a full-attitude converter upstream')
     if c['runtime']['rate_hz']<20 or c['runtime']['start_lead_seconds']<=2*c['runtime']['commit_margin']:
         raise ValueError('Invalid control rate or start barrier times')
-    if args.hardware:
+    if backend=='hardware':
         for key in ['enabled','frames_verified','acceleration_interface_verified']:
             if not c['hardware'][key]:
                 raise ValueError('Hardware configuration incomplete: '+key)
     if args.ros:
         import rospy
         rospy.init_node('ne_tvft_preflight',anonymous=True)
+        if backend=='sss' and not (rospy.get_param('/use_sim_time',False) and rospy.get_param('/use_sss_sim_time',False)):
+            raise ValueError('SSS clocks are not enabled')
         topics=dict(rospy.get_published_topics())
-        prefix='' if args.hardware else '/mock'
+        prefix='/mock' if backend=='mock' else ''
         for rid in ids:
             robot=c['robots'][rid]
             for key,typ in [('pose_topic','geometry_msgs/'+robot['pose_type']),('velocity_topic','geometry_msgs/'+robot['velocity_type'])]:

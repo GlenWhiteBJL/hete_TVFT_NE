@@ -5,6 +5,7 @@ import threading
 import rospy
 from std_msgs.msg import String,Int32
 from ne_tvft.protocol import Supervisor,decode,encode
+from ne_tvft.sss import create_timer
 
 
 def main():
@@ -43,7 +44,7 @@ def main():
                 item=supervisor.events.pop(0)
                 item["version"]=1
                 events.publish(String(data=encode(item)))
-    rospy.Timer(rospy.Duration(.05),tick)
+    create_timer(.05,tick,config.get("simulation",{}).get("backend","hardware"))
     rospy.spin()
 
 

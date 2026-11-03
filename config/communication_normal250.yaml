@@ -1,0 +1,10 @@
+communication:
+  enabled: true
+  distribution: normal
+  delay_s: 0.25
+  std_s: 0.05
+  min_delay_s: 0.0
+  max_delay_s: 0.5
+  seed: 11
+  max_pending: 4096
+  links: {}
