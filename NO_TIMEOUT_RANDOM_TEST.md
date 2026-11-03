@@ -1,6 +1,6 @@
 # 随机时延复测：取消邻居通信过期判定
 
-本次改动仅在 `experiment/communication-delay` 分支。`main@70f5fb0` 和 `PX4_sim@b916da3` 不变，未合并 PX4/SSS 代码。测试后保持当前检出时延分支。
+本文件记录 `05f4bd3` 的 ROS mock 阶段；当时未包含 PX4/SSS。后续在同一时延分支新增平台动力学测试，见 [DELAY_PX4_TEST.md](DELAY_PX4_TEST.md)。`main@70f5fb0` 和 `PX4_sim@b916da3` 的提交不变。
 
 `config/experiment.yaml` 的 `runtime.signal_timeout` 改为 **false**。这取消邻居信号的源时间年龄与接收年龄上限，不是把 300 ms 改成 600 ms 或其他更大阈值。ROS1 参数服务器不支持 null，因此采用可序列化的 false。
 

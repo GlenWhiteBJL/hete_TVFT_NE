@@ -1,0 +1,114 @@
+<launch>
+  <arg name="open_rviz" default="true" />
+  <arg name="open_clock_ui" default="false" />
+  <arg name="max_speed_ratio" default="1" />
+  <arg name="config" default="$(find ne_tvft_experiment)/config/sss_experiment.yaml" />
+  <arg name="communication" default="$(find ne_tvft_experiment)/config/communication_none.yaml" />
+  <arg name="output_root" default="$(find ne_tvft_experiment)/output" />
+  <arg name="picture_root" default="$(find ne_tvft_experiment)/picture" />
+  <include file="$(find sss_sim_env)/launch/sim_clock.launch">
+    <arg name="max_speed_ratio" value="$(arg max_speed_ratio)" />
+    <arg name="auto_start" value="true" />
+    <arg name="open_ui" value="$(arg open_clock_ui)" />
+  </include>
+  <include file="$(find ugv_sim)/launch/ugv_sim_single.launch">
+    <arg name="namespace" value="ugv1" />
+    <arg name="init_x_East_metre" value="-1.6" />
+    <arg name="init_y_North_metre" value="-1.4" />
+    <arg name="init_z_Up_metre" value="0" />
+    <arg name="use_sim_time" value="true" />
+    <arg name="open_rviz" value="false" />
+    <arg name="ugv_type" value="0" />
+    <arg name="use_imu_orientation" value="false" />
+  </include>
+  <include file="$(find px4_rotor_sim)/launch/px4_rotor_sim_single.launch">
+    <arg name="namespace" value="uav1" />
+    <arg name="init_x_East_metre" value="-1.25" />
+    <arg name="init_y_North_metre" value="-1.4" />
+    <arg name="init_z_Up_metre" value="0" />
+    <arg name="use_sim_time" value="true" />
+    <arg name="open_rviz" value="false" />
+    <arg name="local_pos_source" value="0" />
+  </include>
+  <include file="$(find px4_rotor_sim)/launch/px4_rotor_sim_single.launch">
+    <arg name="namespace" value="uav2" />
+    <arg name="init_x_East_metre" value="-1.9500000000000002" />
+    <arg name="init_y_North_metre" value="-1.4" />
+    <arg name="init_z_Up_metre" value="0" />
+    <arg name="use_sim_time" value="true" />
+    <arg name="open_rviz" value="false" />
+    <arg name="local_pos_source" value="0" />
+  </include>
+  <include file="$(find ugv_sim)/launch/ugv_sim_single.launch">
+    <arg name="namespace" value="ugv2" />
+    <arg name="init_x_East_metre" value="1.6" />
+    <arg name="init_y_North_metre" value="-1.4" />
+    <arg name="init_z_Up_metre" value="0" />
+    <arg name="use_sim_time" value="true" />
+    <arg name="open_rviz" value="false" />
+    <arg name="ugv_type" value="0" />
+    <arg name="use_imu_orientation" value="false" />
+  </include>
+  <include file="$(find px4_rotor_sim)/launch/px4_rotor_sim_single.launch">
+    <arg name="namespace" value="uav3" />
+    <arg name="init_x_East_metre" value="1.9500000000000002" />
+    <arg name="init_y_North_metre" value="-1.4" />
+    <arg name="init_z_Up_metre" value="0" />
+    <arg name="use_sim_time" value="true" />
+    <arg name="open_rviz" value="false" />
+    <arg name="local_pos_source" value="0" />
+  </include>
+  <include file="$(find px4_rotor_sim)/launch/px4_rotor_sim_single.launch">
+    <arg name="namespace" value="uav4" />
+    <arg name="init_x_East_metre" value="1.25" />
+    <arg name="init_y_North_metre" value="-1.4" />
+    <arg name="init_z_Up_metre" value="0" />
+    <arg name="use_sim_time" value="true" />
+    <arg name="open_rviz" value="false" />
+    <arg name="local_pos_source" value="0" />
+  </include>
+  <include file="$(find ugv_sim)/launch/ugv_sim_single.launch">
+    <arg name="namespace" value="ugv3" />
+    <arg name="init_x_East_metre" value="0.0" />
+    <arg name="init_y_North_metre" value="1.6" />
+    <arg name="init_z_Up_metre" value="0" />
+    <arg name="use_sim_time" value="true" />
+    <arg name="open_rviz" value="false" />
+    <arg name="ugv_type" value="0" />
+    <arg name="use_imu_orientation" value="false" />
+  </include>
+  <include file="$(find px4_rotor_sim)/launch/px4_rotor_sim_single.launch">
+    <arg name="namespace" value="uav5" />
+    <arg name="init_x_East_metre" value="0.35" />
+    <arg name="init_y_North_metre" value="1.6" />
+    <arg name="init_z_Up_metre" value="0" />
+    <arg name="use_sim_time" value="true" />
+    <arg name="open_rviz" value="false" />
+    <arg name="local_pos_source" value="0" />
+  </include>
+  <include file="$(find px4_rotor_sim)/launch/px4_rotor_sim_single.launch">
+    <arg name="namespace" value="uav6" />
+    <arg name="init_x_East_metre" value="-0.35" />
+    <arg name="init_y_North_metre" value="1.6" />
+    <arg name="init_z_Up_metre" value="0" />
+    <arg name="use_sim_time" value="true" />
+    <arg name="open_rviz" value="false" />
+    <arg name="local_pos_source" value="0" />
+  </include>
+  <include file="$(find ne_tvft_experiment)/launch/experiment.launch">
+    <arg name="mock" value="false" />
+    <arg name="allow_hardware" value="false" />
+    <arg name="backend" value="sss" />
+    <arg name="config" value="$(arg config)" />
+    <arg name="communication" value="$(arg communication)" />
+    <arg name="output_root" value="$(arg output_root)" />
+    <arg name="picture_root" value="$(arg picture_root)" />
+  </include>
+  <group if="$(arg open_rviz)">
+    <node pkg="rviz" type="rviz" name="ne_tvft_rviz" args="-d $(find ne_tvft_experiment)/config/sss.rviz" output="screen">
+      <env name="LIBGL_ALWAYS_SOFTWARE" value="1" />
+      <env name="QT_X11_NO_MITSHM" value="1" />
+      <env name="DISABLE_ROS1_EOL_WARNINGS" value="1" />
+    </node>
+  </group>
+</launch>

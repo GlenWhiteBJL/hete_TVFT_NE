@@ -196,8 +196,8 @@ class AgentNodeTests(unittest.TestCase):
     def setUp(self):
         root=Path(__file__).resolve().parents[1]
         self.config=yaml.safe_load((root/"config/experiment.yaml").read_text(encoding="utf-8"))
-        # Existing watchdog tests explicitly exercise the optional legacy guard.
-        self.config['runtime']['signal_timeout']=.3
+        # Legacy watchdog cases explicitly opt into the optional age guard.
+        self.config["runtime"]["signal_timeout"]=.3
         self.config.update(yaml.safe_load((root/"config/topics.yaml").read_text(encoding="utf-8")))
         self.ros=fake_ros(self.config)
         self.module_patch=patch.dict(sys.modules,ros_stubs(self.ros))
@@ -416,6 +416,39 @@ class AgentNodeTests(unittest.TestCase):
         self.config["robots"]["uav1"]["velocity_frame"]="body"
         with self.assertRaisesRegex(ValueError,"UAV velocity"):
             self.module.AgentNode()
+
+    def test_sss_landing_requires_real_ground_feedback_before_disarm(self):
+        self.node.backend='sss'
+        self.sensors(position=[1,2,1.2])
+        self.session('LANDING')
+        requests=[]
+        self.node.request_service=lambda **kw:requests.append(kw)
+        target,ready,mode=self.node._uav_nonrunning('LANDING',True,True,.02,100,100,0)
+        self.assertEqual(mode,'sss_landing_position')
+        self.assertFalse(ready)
+        self.assertEqual(requests,[])
+        self.assertLess(target['position'][2],1.2)
+        self.node.position=np.array([1.,2.,0.])
+        self.node.velocity=np.zeros(3)
+        self.node.landed_state=1
+        self.node.landed_receipt=100
+        _,ready,_=self.node._uav_nonrunning('LANDING',True,True,.02,100,100,0)
+        self.assertFalse(ready)
+        self.assertEqual(requests,[{'armed':False}])
+        self.node.fcu['armed']=False
+        self.assertTrue(self.node._uav_nonrunning('LANDING',True,True,.02,100,100,0)[1])
+
+    def test_sss_disarm_job_cancelled_if_airborne_or_phase_changed(self):
+        self.node.backend='sss'
+        self.sensors(position=[0,0,1.2])
+        self.session('LANDING')
+        job=(None,False,'LANDING','test')
+        self.assertFalse(self.node._service_is_current(job))
+        self.node.position[2]=0
+        self.node.landed_state=1
+        self.assertTrue(self.node._service_is_current(job))
+        self.session('STOPPING')
+        self.assertFalse(self.node._service_is_current(job))
 
 
 if __name__=="__main__":

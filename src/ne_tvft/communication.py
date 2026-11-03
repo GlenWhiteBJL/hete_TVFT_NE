@@ -47,8 +47,9 @@ class DelayBuffer:
         self.last_injected_s = 0.0
         self.generated = {}
 
-    def push(self, sender, payload, receipt):
-        if not math.isfinite(receipt):
+    def push(self, sender, payload, receipt, clock=None):
+        schedule_time = receipt if clock is None else clock
+        if not math.isfinite(receipt) or not math.isfinite(schedule_time):
             raise ValueError("Invalid receipt clock")
         if len(self.pending) >= self.limit:
             raise OverflowError("Communication delay queue capacity exceeded")
@@ -80,7 +81,7 @@ class DelayBuffer:
         # Histogram is over [0,max_delay_s]; final bin also contains overflow for nonnormal profiles.
         stat["histogram"][min(19,int(delay/max(self.maximum,1e-12)*20))] += 1
         self.sequence += 1
-        heapq.heappush(self.pending, (receipt + delay, self.sequence, sender,
+        heapq.heappush(self.pending, (schedule_time + delay, self.sequence, sender,
                                      copy.deepcopy(payload), receipt, delay))
 
     def release(self, now):

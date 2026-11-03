@@ -1,11 +1,12 @@
 <launch>
   <arg name="mock" default="true"/>
   <arg name="allow_hardware" default="false"/>
+  <arg name="backend" default="auto"/>
+  <arg name="communication" default="$(find ne_tvft_experiment)/config/communication_none.yaml"/>
   <arg name="config" default="$(find ne_tvft_experiment)/config/experiment.yaml"/>
   <arg name="topics" default="$(find ne_tvft_experiment)/config/topics.yaml"/>
   <arg name="output_root" default="$(find ne_tvft_experiment)/output"/>
   <arg name="picture_root" default="$(find ne_tvft_experiment)/picture"/>
-  <arg name="communication" default="$(find ne_tvft_experiment)/config/communication_none.yaml"/>
   <rosparam command="load" file="$(arg config)" ns="/ne_tvft/config"/>
   <rosparam command="load" file="$(arg topics)" ns="/ne_tvft/config"/>
   <rosparam command="load" file="$(arg communication)" ns="/ne_tvft/config"/>
@@ -14,6 +15,7 @@
   <node pkg="ne_tvft_experiment" type="supervisor_node.py" name="supervisor" output="screen" required="true"/>
   <node pkg="ne_tvft_experiment" type="recorder_node.py" name="recorder" output="screen" required="true">
     <param name="mock" value="$(arg mock)"/>
+    <param name="backend" value="$(arg backend)"/>
   </node>
   <node if="$(arg mock)" pkg="ne_tvft_experiment" type="mock_fleet.py" name="mock_fleet" output="screen" required="true"/>
   <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_ugv1" output="screen" required="true">
@@ -21,6 +23,7 @@
     <param name="config_file" value="$(arg config)"/>
     <param name="topics_file" value="$(arg topics)"/>
     <param name="mock" value="$(arg mock)"/>
+    <param name="backend" value="$(arg backend)"/>
     <param name="allow_hardware" value="$(arg allow_hardware)"/>
   </node>
   <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_ugv2" output="screen" required="true">
@@ -28,6 +31,7 @@
     <param name="config_file" value="$(arg config)"/>
     <param name="topics_file" value="$(arg topics)"/>
     <param name="mock" value="$(arg mock)"/>
+    <param name="backend" value="$(arg backend)"/>
     <param name="allow_hardware" value="$(arg allow_hardware)"/>
   </node>
   <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_ugv3" output="screen" required="true">
@@ -35,6 +39,7 @@
     <param name="config_file" value="$(arg config)"/>
     <param name="topics_file" value="$(arg topics)"/>
     <param name="mock" value="$(arg mock)"/>
+    <param name="backend" value="$(arg backend)"/>
     <param name="allow_hardware" value="$(arg allow_hardware)"/>
   </node>
   <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav1" output="screen" required="true">
@@ -42,6 +47,7 @@
     <param name="config_file" value="$(arg config)"/>
     <param name="topics_file" value="$(arg topics)"/>
     <param name="mock" value="$(arg mock)"/>
+    <param name="backend" value="$(arg backend)"/>
     <param name="allow_hardware" value="$(arg allow_hardware)"/>
   </node>
   <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav2" output="screen" required="true">
@@ -49,6 +55,7 @@
     <param name="config_file" value="$(arg config)"/>
     <param name="topics_file" value="$(arg topics)"/>
     <param name="mock" value="$(arg mock)"/>
+    <param name="backend" value="$(arg backend)"/>
     <param name="allow_hardware" value="$(arg allow_hardware)"/>
   </node>
   <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav3" output="screen" required="true">
@@ -56,6 +63,7 @@
     <param name="config_file" value="$(arg config)"/>
     <param name="topics_file" value="$(arg topics)"/>
     <param name="mock" value="$(arg mock)"/>
+    <param name="backend" value="$(arg backend)"/>
     <param name="allow_hardware" value="$(arg allow_hardware)"/>
   </node>
   <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav4" output="screen" required="true">
@@ -63,6 +71,7 @@
     <param name="config_file" value="$(arg config)"/>
     <param name="topics_file" value="$(arg topics)"/>
     <param name="mock" value="$(arg mock)"/>
+    <param name="backend" value="$(arg backend)"/>
     <param name="allow_hardware" value="$(arg allow_hardware)"/>
   </node>
   <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav5" output="screen" required="true">
@@ -70,6 +79,7 @@
     <param name="config_file" value="$(arg config)"/>
     <param name="topics_file" value="$(arg topics)"/>
     <param name="mock" value="$(arg mock)"/>
+    <param name="backend" value="$(arg backend)"/>
     <param name="allow_hardware" value="$(arg allow_hardware)"/>
   </node>
   <node pkg="ne_tvft_experiment" type="agent_node.py" name="agent_uav6" output="screen" required="true">
@@ -77,6 +87,7 @@
     <param name="config_file" value="$(arg config)"/>
     <param name="topics_file" value="$(arg topics)"/>
     <param name="mock" value="$(arg mock)"/>
+    <param name="backend" value="$(arg backend)"/>
     <param name="allow_hardware" value="$(arg allow_hardware)"/>
   </node>
 </launch>

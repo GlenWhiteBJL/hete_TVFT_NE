@@ -100,13 +100,14 @@ def formal_packet(packet, sid, t0):
             and finite_number(packet.get("start_offset_s")))
 
 
-def validate_recording(directory, sid, t0, ids, duration, rate_hz, bag_factory=None):
+def validate_recording(directory, sid, t0, ids, duration, rate_hz, bag_factory=None, backend="mock"):
     """Read actual closed recordings; a syntactically present bag is insufficient."""
     directory = Path(directory)
     metadata = json.loads((directory / "metadata.json").read_text(encoding="utf-8"))
     status = json.loads((directory / "recording_status.json").read_text(encoding="utf-8"))
-    if metadata.get("mock") is not True or metadata.get("session_id") != sid:
-        raise SmokeFailure("Recording metadata does not identify this mock session")
+    if (metadata.get("mock") is not (backend == "mock") or metadata.get("session_id") != sid
+            or (backend != "mock" and metadata.get("backend") != backend)):
+        raise SmokeFailure("Recording metadata does not identify this backend/session")
     if not finite_number(metadata.get("t0")) or abs(metadata["t0"] - t0) > 1e-6:
         raise SmokeFailure("Recording metadata has a different start time")
     if status.get("complete") is not True or status.get("failed") is not False or status.get("dropped") != 0:

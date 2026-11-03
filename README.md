@@ -1,6 +1,6 @@
 # 3 UGV + 6 UAV：环境监测 NE 与圆周 TVFT 实验
 
-原通信时延分支的无过期判定随机时延试验见 [NO_TIMEOUT_RANDOM_TEST.md](NO_TIMEOUT_RANDOM_TEST.md)；本分支不包含 PX4_sim 接入。
+本分支保留无邻居过期判定：原 ROS mock 复测见 [NO_TIMEOUT_RANDOM_TEST.md](NO_TIMEOUT_RANDOM_TEST.md)，新增 swarm_sync_sim/PX4 动力学复测见 [DELAY_PX4_TEST.md](DELAY_PX4_TEST.md)。
 当前分支加入可配置通信时延及效果对照，用法见 [COMMUNICATION_DELAY.md](COMMUNICATION_DELAY.md)。已在腾讯云服务器完成本分支的截断正态随机时延 ROS mock 与无时延对照，实际分布和结果见 [NORMAL_ROS_TEST.md](NORMAL_ROS_TEST.md)。下述既有 main 验证与本次时延分支验证分别记录。
 
 250 ms均值、50 ms标准差、0–500 ms截断范围的多种子/多初值设计见 [DELAY250_DESIGN.md](DELAY250_DESIGN.md)。14次腾讯云ROS运行的实际结果见 [DELAY250_RESULTS.md](DELAY250_RESULTS.md)：无时延基线2/2完成，300ms保护组0/6完成，600ms研究组6/6完成；失败与启动屏障故障均保留统计。

@@ -23,6 +23,7 @@ from .adapters import (PlanarTransform, finite_vector, quaternion_yaw, rotation,
     height_acceleration, limit_norm, sample_is_fresh, neighbor_sample_is_usable, DerivativeEstimate, StartGate)
 from .core import LeaderController, FollowerController, circle
 from .communication import DelayBuffer
+from .sss import create_timer, outputs_allowed
 
 PHASES = {"IDLE", "PREPARING", "READY", "ARMING", "ARMED", "TAKING_OFF", "AIRBORNE",
           "POSITIONING", "POSITIONED", "RECORDING", "SCHEDULED", "RUNNING", "STOPPING",
@@ -61,10 +62,14 @@ class AgentNode:
         self.runtime = self.config["runtime"]
         self.limits = self.config["limits"]
         self.mock = bool(rospy.get_param("~mock", False))
+        self.backend = str(rospy.get_param("~backend", "auto"))
+        if self.backend == "auto":
+            self.backend = "mock" if self.mock else "hardware"
         hardware = self.config.get("hardware", {})
-        self.hardware_allowed = (self.mock or (bool(rospy.get_param("~allow_hardware", False))
-            and hardware.get("enabled", False) and hardware.get("frames_verified", False)
-            and hardware.get("acceleration_interface_verified", False)))
+        self.hardware_allowed = outputs_allowed(self.backend, self.mock,
+            bool(rospy.get_param("~allow_hardware", False)), hardware,
+            bool(rospy.get_param("/use_sim_time", False)),
+            bool(rospy.get_param("/use_sss_sim_time", False)))
         self.sensor_transform = PlanarTransform(self.robot.get("transform"))
         self.velocity_transform = PlanarTransform(self.robot.get("velocity_transform", self.robot.get("transform")))
         self.setpoint_transform = PlanarTransform(self.robot.get("setpoint_transform"))
@@ -94,6 +99,10 @@ class AgentNode:
         self.controller_initialized = False
         self.neighbors = {}
         self.communication = DelayBuffer(self.config.get("communication"), self.agent_id)
+        self.communication_clock = self.config.get("communication", {}).get(
+            "clock", "ros" if self.backend == "sss" else "wall")
+        if self.communication_clock not in ("ros", "wall"):
+            raise ValueError("communication.clock must be ros or wall")
         self.communication_out_of_order = 0
         self.fault = ""
         self.last_tick = None
@@ -105,6 +114,7 @@ class AgentNode:
         self.hold_position = None
         self.takeoff_xy = None
         self.takeoff_z = None
+        self.landing_xy = self.landing_z = None
         self.service_queue = queue.Queue(maxsize=1)
         self.service_busy = False
         self.last_service = -math.inf
@@ -122,7 +132,7 @@ class AgentNode:
             self.subscribers.append(rospy.Subscriber("/ne_tvft/signal/"+agent_id, String,
                 lambda msg, aid=agent_id: self.signal_callback(aid, msg), queue_size=5))
         threading.Thread(target=self.service_worker, daemon=True).start()
-        self.timer = rospy.Timer(rospy.Duration(1.0/self.runtime["rate_hz"]), self.tick, reset=True)
+        self.timer = create_timer(1.0/self.runtime["rate_hz"], self.tick, self.backend, reset=True)
         rospy.on_shutdown(self.shutdown)
 
     def external(self, topic):
@@ -263,6 +273,9 @@ class AgentNode:
                     if phase == "TAKING_OFF" and self.position is not None:
                         self.takeoff_xy = self.position[:2].copy()
                         self.takeoff_z = float(self.position[2])
+                    if phase == "LANDING" and self.position is not None:
+                        self.landing_xy = self.position[:2].copy()
+                        self.landing_z = float(self.position[2])
                     if phase == "PREPARING" and (not self.is_uav or (self.landed_state == 1 and not self.fcu["armed"])):
                         self.fault = ""
                         self.gate = StartGate()
@@ -302,7 +315,8 @@ class AgentNode:
                 if (p.get("session_id") != self.session["session_id"]
                         or abs(p["t0"]-self.session["t0"]) >= 1e-9):
                     return
-                self.communication.push(agent_id, p, time.monotonic())
+                self.communication.push(agent_id, p, time.monotonic(),
+                    clock=rospy.Time.now().to_sec() if self.communication_clock == "ros" else None)
             except OverflowError as exc:
                 self.fault = str(exc)
             except (ValueError, KeyError, TypeError, json.JSONDecodeError):
@@ -321,7 +335,7 @@ class AgentNode:
         return True, ""
 
     def _signals(self, now, wall):
-        for aid, packet, receipt in self.communication.release(wall):
+        for aid, packet, receipt in self.communication.release(now if self.communication_clock == "ros" else wall):
             old = self.neighbors.get(aid)
             if old is None or packet["stamp"] > old[0]["stamp"]:
                 self.neighbors[aid] = (packet, receipt)
@@ -386,6 +400,12 @@ class AgentNode:
                 return False
             if mode == "AUTO.LAND" and armed is None:
                 return phase == "LANDING" and self.fcu["connected"]
+            if self.backend == "sss" and mode is None and armed is False:
+                return (phase == "LANDING" and self.fcu["connected"]
+                    and self.landed_state == 1 and self.position is not None
+                    and self.position[2] <= self.config.get("simulation", {}).get("ground_z", 0.0) + .05
+                    and time.monotonic()-self.landed_receipt <= self.runtime.get("fcu_state_timeout", 3.0)
+                    and self._sensors_healthy(rospy.Time.now().to_sec(), time.monotonic())[0])
             if ((mode == "OFFBOARD" and armed is None) or (mode is None and armed is True)):
                 return phase == "ARMING" and not self.fault and self._sensors_healthy(rospy.Time.now().to_sec(),time.monotonic())[0]
             return False
@@ -590,7 +610,8 @@ class AgentNode:
             "communication":dict(self.communication.diagnostics(), out_of_order=self.communication_out_of_order,
                 neighbor_source_age_s={aid:max(0.0,now-pair[0]["stamp"]) for aid,pair in self.neighbors.items()}),
             "start_offset_s":self.start_offset,"command_mode":mode,"setpoint":target,"fcu":self.fcu.copy(),
-            "landed_state":self.landed_state,"dt":dt,"service_error":self.service_error,
+            "landed_state":self.landed_state,"backend":self.backend,
+            "communication_clock":self.communication_clock,"dt":dt,"service_error":self.service_error,
             "last_service_result":self.last_service_result,"outputs_enabled":self.hardware_allowed}
         self.telemetry_pub.publish(String(data=json.dumps(telemetry,default=jsonable,allow_nan=False)))
 
@@ -599,6 +620,19 @@ class AgentNode:
                                yaw,self.setpoint_transform)
         if phase == "LANDING":
             landed = self.landed_state == 1 and wall-self.landed_receipt <= self.runtime.get("fcu_state_timeout",3.0)
+            if self.backend == "sss":
+                # SSS has no Navigator auto-land task. Descend under OFFBOARD,
+                # then disarm only after the simulator's land detector confirms.
+                sim = self.config.get("simulation", {})
+                ground = float(sim.get("ground_z", 0.0))
+                if self.landing_xy is None:
+                    self.landing_xy, self.landing_z = self.position[:2].copy(), float(self.position[2])
+                self.landing_z = max(ground, self.landing_z-float(sim.get("landing_speed", .2))*max(0., dt))
+                on_ground = landed and self.position[2] <= ground+.05 and stopped and healthy
+                if on_ground and self.fcu["armed"]:
+                    self.request_service(armed=False)
+                return (position_target(np.r_[self.landing_xy, self.landing_z], yaw, self.setpoint_transform),
+                        on_ground and not self.fcu["armed"], "sss_landing_position")
             if not landed and self.fcu["connected"] and self.fcu["mode"] != "AUTO.LAND":
                 self.request_service(mode="AUTO.LAND")
             return velocity_target([0,0,0],yaw,self.setpoint_transform),landed and not self.fcu["armed"],"autoland"

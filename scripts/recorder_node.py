@@ -12,6 +12,7 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from ne_tvft.recording import SessionWriter, decode_packet
+from ne_tvft.sss import create_timer
 
 
 class RecorderNode:
@@ -23,6 +24,9 @@ class RecorderNode:
         if not self.config:
             raise ValueError("No experiment configuration at ~config or /ne_tvft/config")
         self.mock = bool(rospy.get_param("~mock", False))
+        self.backend = rospy.get_param("~backend", "auto")
+        if self.backend == "auto":
+            self.backend = "mock" if self.mock else "hardware"
         log = self.config.get("logging", {})
         self.root = Path(log.get("output_root", "output")).expanduser()
         if not self.root.is_absolute():
@@ -53,7 +57,7 @@ class RecorderNode:
                                             self.on_command, queue_size=20)
         self.worker = threading.Thread(target=self.run_worker, name="recording_manager", daemon=True)
         self.worker.start()
-        self.timer = rospy.Timer(rospy.Duration(.1), self.publish_status)
+        self.timer = create_timer(.1, self.publish_status, self.backend)
         rospy.on_shutdown(self.shutdown)
 
     def enqueue(self, command, payload):
@@ -96,7 +100,7 @@ class RecorderNode:
                 writer.write(packet)
 
     def bag_topics(self):
-        topics = {"/command", "/ne_tvft/session", "/ne_tvft/telemetry", "/ne_tvft/recorder_status", "/ne_tvft/events"}
+        topics = {"/clock", "/command", "/ne_tvft/session", "/ne_tvft/telemetry", "/ne_tvft/recorder_status", "/ne_tvft/events"}
         for name, robot in self.config.get("robots", {}).items():
             topics.add("/ne_tvft/signal/" + name)
             for key, value in robot.items():
@@ -164,7 +168,9 @@ class RecorderNode:
             self.bag_ready = False
             with self._lock:
                 self.writer = SessionWriter(self.root, sid, {"config": self.config, "session": packet,
-                                             "mock": self.mock, "firmware": self.config.get("hardware", {})},
+                                             "mock": self.mock, "backend": self.backend,
+                                             "verification_scope": "SSS PX4 modules + quadrotor dynamics" if self.backend == "sss" else self.backend,
+                                             "firmware": self.config.get("hardware", {})},
                                              self.config.get("logging", {}).get("queue_size", 10000))
             self.start_bag()
         self.phase = phase

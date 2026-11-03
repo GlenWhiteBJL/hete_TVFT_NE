@@ -3,6 +3,17 @@ from ne_tvft.adapters import neighbor_sample_is_usable
 
 
 class NeighborExpiryTests(unittest.TestCase):
+    def test_sss_clock_delay_preserves_disabled_age_guard(self):
+        import test_adapters as adapters
+        from ne_tvft.communication import DelayBuffer
+        from unittest.mock import patch
+        f=adapters.AgentNodeTests('runTest');f.setUp();self.addCleanup(f.tearDown)
+        n=f.node;n.runtime['signal_timeout']=False;n.communication_clock='ros'
+        n.communication=DelayBuffer({'enabled':True,'distribution':'fixed','delay_s':.25},n.agent_id)
+        with patch.object(f.module.time,'monotonic',return_value=100.): f.neighbors()
+        self.assertFalse(n._signals(100.24,100.24)[1])
+        self.assertTrue(n._signals(100.5,100.5)[1])
+
     def test_disabled_expiry_accepts_aged_data(self):
         self.assertTrue(neighbor_sample_is_usable(20., 15., 5., False))
         self.assertFalse(neighbor_sample_is_usable(20., 15., 5., .3))

@@ -19,10 +19,13 @@ def summarize(root):
         row['error']=smoke.get('error',case.get('error',''))
         row['ros_runtime_executed']=smoke.get('ros_runtime_executed',False)
         row['session_id']=smoke.get('session_id')
+        row['backend']=case.get('backend',batch.get('backend','mock'))
         if smoke.get('session_id'):
             session=run/'output'/smoke['session_id']
             meta=json.loads((session/'metadata.json').read_text())
             cfg=meta['config']
+            if row['backend']=='sss' and (meta.get('backend')!='sss' or meta.get('mock') is not False):
+                raise ValueError('Expected actual SSS recording, not mock')
             if cfg['runtime']['signal_timeout'] is not False:
                 raise ValueError('Actual neighbor expiry was enabled')
             row['runtime_used']=cfg['runtime']
@@ -31,6 +34,11 @@ def summarize(root):
                 for line in f:
                     p=json.loads(line);latest[p['id']]=p
                     if p.get('phase')=='RUNNING' and p['stamp']>=start:
+                        if row['backend']=='sss':
+                            if p.get('backend')!='sss' or p.get('communication_clock')!='ros':
+                                raise ValueError('Unexpected backend or delay clock')
+                            if p['id'].startswith('uav') and p.get('setpoint',{}).get('type_mask')!=2111:
+                                raise ValueError('UAV control is not acceleration-only')
                         values=list(p.get('communication',{}).get('neighbor_source_age_s',{}).values())
                         ages.extend(values);over300+=sum(v>.3 for v in values)
             stats={}
@@ -62,7 +70,7 @@ def summarize(root):
         'generated_distribution_includes_startup_and_out_of_order_packets':True}
     (root/'summary.json').write_text(json.dumps(report,indent=2,allow_nan=False)+'\n')
     lines=['# 250 ms 随机时延：取消邻居过期判定','',
-        '分支：`experiment/communication-delay`。ROS Noetic 理想积分器 mock；没有运行 SSS、PX4 或实机。',
+        '分支：`experiment/communication-delay`。'+batch['scope'],
         '初值 A；时延均值参数 250 ms、标准差参数 50 ms、拒绝采样截断至 0–500 ms。仅 signal_timeout=false，其余定位、监督器、FCU、记录器、截止时间与执行限幅不变。','',
         '| 工况 | 完整运行 | NE 末段最大误差(m) | 编队位置末段最大误差(m) | 编队速度末段最大误差(m/s) | 超300ms邻居采样数 |',
         '|---|---|---:|---:|---:|---:|']

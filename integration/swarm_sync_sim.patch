@@ -1,0 +1,47 @@
+diff --git a/src/px4_rotor_sim/include/mavros_px4_quadrotor_sim/px4_sitl.hpp b/src/px4_rotor_sim/include/mavros_px4_quadrotor_sim/px4_sitl.hpp
+index d5d918f..9bab71f 100644
+--- a/src/px4_rotor_sim/include/mavros_px4_quadrotor_sim/px4_sitl.hpp
++++ b/src/px4_rotor_sim/include/mavros_px4_quadrotor_sim/px4_sitl.hpp
+@@ -20,6 +20,7 @@
+ #define __PX4_SITL_H__
+ 
+ #include <ros/ros.h>
++#include <mavros_msgs/ExtendedState.h>
+ #include <iostream> // for std::cout, std::endl
+ #include <memory>  // for std::shared_ptr
+ 
+@@ -82,6 +83,7 @@ public:
+ private:
+     ros::NodeHandle nh_;
+     ros::NodeHandle nh_private_;
++    ros::Publisher extended_state_pub_;
+ 
+     enum class position_mode : uint32_t {
+         MOCAP,
+diff --git a/src/px4_rotor_sim/src/mavros_px4_quadrotor_sim/px4_sitl.cpp b/src/px4_rotor_sim/src/mavros_px4_quadrotor_sim/px4_sitl.cpp
+index 2cddd41..1fad79a 100644
+--- a/src/px4_rotor_sim/src/mavros_px4_quadrotor_sim/px4_sitl.cpp
++++ b/src/px4_rotor_sim/src/mavros_px4_quadrotor_sim/px4_sitl.cpp
+@@ -24,6 +24,9 @@ namespace MavrosQuadSimulator
+ PX4SITL::PX4SITL(int agent_id, const ros::NodeHandle &nh, const ros::NodeHandle &nh_private, const std::shared_ptr<Dynamics> &dynamics)
+     : agent_id_(agent_id), nh_(nh), nh_private_(nh_private), uav_dynamics_(dynamics), pos_inited_(false)
+ {
++    // Publish the actual simulator land detector, missing in the upstream MAVLink streamer.
++    extended_state_pub_ = nh_.advertise<mavros_msgs::ExtendedState>("mavros/extended_state", 10);
++
+     /* Load px4 parameters from ROS parameter space to override the default values from <parameters/px4_parameters.hpp>*/
+     load_px4_params_from_ros_params(); // Before loading px4 modules!
+ 
+@@ -230,6 +233,12 @@ void PX4SITL::DectectLand(const uint64_t &time_us)
+         vehicle_land_detected_msg.ground_contact = _ground_contact_hysteresis.get_state();
+         vehicle_land_detected_msg.freefall = _freefall_hysteresis.get_state();
+         _vehicle_land_detected_pub.publish(vehicle_land_detected_msg);
++        mavros_msgs::ExtendedState extended;
++        extended.header.stamp = ros::Time::now();
++        extended.landed_state = vehicle_land_detected_msg.landed
++            ? mavros_msgs::ExtendedState::LANDED_STATE_ON_GROUND
++            : mavros_msgs::ExtendedState::LANDED_STATE_IN_AIR;
++        extended_state_pub_.publish(extended);
+     }
+ }
+ 
