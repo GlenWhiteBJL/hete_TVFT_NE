@@ -24,6 +24,7 @@ from .adapters import (PlanarTransform, finite_vector, quaternion_yaw, rotation,
 from .core import LeaderController, FollowerController, circle
 from .communication import DelayBuffer
 from .sss import create_timer, outputs_allowed
+from .safety_ros import AgentSafety
 
 PHASES = {"IDLE", "PREPARING", "READY", "ARMING", "ARMED", "TAKING_OFF", "AIRBORNE",
           "POSITIONING", "POSITIONED", "RECORDING", "SCHEDULED", "RUNNING", "STOPPING",
@@ -128,6 +129,7 @@ class AgentNode:
                                           PositionTarget if self.is_uav else Twist, queue_size=1)
         self.subscribers = [rospy.Subscriber("/ne_tvft/session", String, self.session_callback, queue_size=10)]
         self._sensor_subscriptions()
+        self.safety = AgentSafety(self)
         for agent_id in self.expected_ids:
             self.subscribers.append(rospy.Subscriber("/ne_tvft/signal/"+agent_id, String,
                 lambda msg, aid=agent_id: self.signal_callback(aid, msg), queue_size=5))
@@ -332,6 +334,9 @@ class AgentNode:
             return False, "stale velocity"
         if self.is_uav and (not self.fcu["connected"] or wall-self.fcu_receipt > self.runtime.get("fcu_state_timeout",3.0)):
             return False, "FCU disconnected or stale state"
+        okay, safety_reason = self.safety.check(now, wall)
+        if not okay:
+            return False, safety_reason
         return True, ""
 
     def _signals(self, now, wall):
@@ -568,6 +573,14 @@ class AgentNode:
                 target, ready, mode = self._uav_nonrunning("FAULT",healthy,stopped,dt,now,wall,yaw)
             if mode != "acceleration":
                 applied = np.zeros(3)
+            target, safety_override, safety_input = self.safety.apply(target, now, healthy)
+            if safety_override:
+                applied = safety_input if safety_input is not None else np.zeros(3)
+                limited = limited or self.safety.diagnostic.get("active", False)
+                if target["kind"] == "acceleration":
+                    mode = "acceleration" if execute else "safety_acceleration"
+                else:
+                    mode = "safety_brake_velocity"
             self._publish_uav(target)
         elif not self.is_uav:
             if execute and not self.fault:
@@ -611,6 +624,7 @@ class AgentNode:
                 neighbor_source_age_s={aid:max(0.0,now-pair[0]["stamp"]) for aid,pair in self.neighbors.items()}),
             "start_offset_s":self.start_offset,"command_mode":mode,"setpoint":target,"fcu":self.fcu.copy(),
             "landed_state":self.landed_state,"backend":self.backend,
+            "safety":copy.deepcopy(self.safety.diagnostic),
             "communication_clock":self.communication_clock,"dt":dt,"service_error":self.service_error,
             "last_service_result":self.last_service_result,"outputs_enabled":self.hardware_allowed}
         self.telemetry_pub.publish(String(data=json.dumps(telemetry,default=jsonable,allow_nan=False)))
@@ -627,12 +641,21 @@ class AgentNode:
                 ground = float(sim.get("ground_z", 0.0))
                 if self.landing_xy is None:
                     self.landing_xy, self.landing_z = self.position[:2].copy(), float(self.position[2])
-                self.landing_z = max(ground, self.landing_z-float(sim.get("landing_speed", .2))*max(0., dt))
+                corridor_ready = True
+                if self.safety.enabled and self.safety.snapshot is not None:
+                    self.landing_xy, corridor_ready = self.safety.landing_corridor(self.landing_xy)
+                if corridor_ready:
+                    self.landing_z = max(ground, self.landing_z-float(sim.get("landing_speed", .2))*max(0., dt))
                 on_ground = landed and self.position[2] <= ground+.05 and stopped and healthy
                 if on_ground and self.fcu["armed"]:
                     self.request_service(armed=False)
                 return (position_target(np.r_[self.landing_xy, self.landing_z], yaw, self.setpoint_transform),
                         on_ground and not self.fcu["armed"], "sss_landing_position")
+            if self.safety.enabled and self.safety.snapshot is not None and not landed and self.fcu["mode"] != "AUTO.LAND":
+                self.landing_xy, corridor_ready = self.safety.landing_corridor(self.landing_xy)
+                if not corridor_ready:
+                    return (position_target(np.r_[self.landing_xy, self.landing_z], yaw, self.setpoint_transform),
+                            False, "landing_clearance_position")
             if not landed and self.fcu["connected"] and self.fcu["mode"] != "AUTO.LAND":
                 self.request_service(mode="AUTO.LAND")
             return velocity_target([0,0,0],yaw,self.setpoint_transform),landed and not self.fcu["armed"],"autoland"

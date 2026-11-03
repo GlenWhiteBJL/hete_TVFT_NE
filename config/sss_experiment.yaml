@@ -24,9 +24,9 @@ runtime:
   transition_timeout: 60.0
   max_run_seconds: 120.0
 limits:
-  ugv_speed: 0.3
+  ugv_speed: 0.15
   uav_acceleration: 0.8
-  uav_speed: 0.6
+  uav_speed: 0.3
   z_acceleration: 0.6
   altitude_kp: 1.0
   altitude_kd: 1.5
@@ -80,9 +80,9 @@ topology:
     - 0
 formation:
   radii:
-  - 0.35
-  - 0.35
-  - 0.35
+  - 0.5
+  - 0.5
+  - 0.5
   angular_rates:
   - 0.1
   - 0.1
@@ -154,6 +154,27 @@ logging:
   rosbag: true
   bag_required: true
   max_alignment_gap: 0.1
+safety:
+  enabled: true
+  # 20x20 cm UAV envelope, 30x30x20 cm vehicle; distances in metres.
+  uav_body_radius: 0.15
+  uav_body_half_height: 0.08
+  ugv_body_radius: 0.21213203436
+  ugv_body_half_height: 0.10
+  body_margin: 0.05
+  uav_min_distance: 0.45
+  ugv_horizontal_radius: 0.48
+  ugv_vertical_radius: 0.55
+  ugv_center_height: 0.10
+  barrier_k1: 2.0
+  barrier_k2: 2.0
+  acceleration_error_bound: 0.15
+  ugv_acceleration_bound: 0.5
+  state_max_age: 0.10
+  speed_prediction_horizon: 0.20
+  position_kp: 1.0
+  velocity_kp: 2.0
+  landing_clearance: 0.05
 simulation:
   backend: sss
   ground_z: 0.0

@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT / "src"))
 from ne_tvft.core import LeaderController, FollowerController, MonitoringGame, circle
 from ne_tvft.communication import SampledNetwork
+from ne_tvft.safety import GroupSafety, challenge_acceleration
 
 
 def jsonable(value):
@@ -110,6 +111,7 @@ def simulate(config,duration,dt,out=None,session_id="offline",sample_dt=.02,appl
     transport = SampledNetwork(config.get("communication", {})) if config.get("communication", {}).get("enabled",False) else None
     m = len(leaders)
     game = MonitoringGame(config)
+    safety = GroupSafety(config)
     equilibrium = game.equilibrium()  # evaluation only; controllers do not see it.
     alpha_max,beta_max = 0.,0.
     limited_samples = {group["leader"]:0 for group in config["groups"]}
@@ -126,6 +128,20 @@ def simulate(config,duration,dt,out=None,session_id="offline",sample_dt=.02,appl
         while True:
             ol,of,nl,nf = snapshot(config,leaders,followers,xl,xf,vf,t,transport)
             ul,uf,limited_l,limited_f = limited_inputs(config,ol,of,apply_limits)
+            safety_diagnostics = {}
+            for i, group in enumerate(config["groups"]):
+                for j, name in enumerate(group["followers"]):
+                    challenge = challenge_acceleration(config, i, j, t, vf[i,j])
+                    if challenge is not None:
+                        uf[i,j] = challenge
+                    if safety.enabled:
+                        altitude = group["altitude"]
+                        uf[i,j], diagnostic = safety.filter(uf[i,j], np.r_[xf[i,j],altitude], np.r_[vf[i,j],0.],
+                            np.r_[xf[i,1-j],altitude], np.r_[vf[i,1-j],0.], np.r_[xl[i],0.], np.r_[ul[i],0.])
+                        limited_f[i,j] |= diagnostic["active"]
+                        safety_diagnostics[name] = dict(diagnostic, challenge_active=challenge is not None)
+                    else:
+                        safety_diagnostics[name] = {"enabled":False,"active":False,"challenge_active":challenge is not None}
             for i,group in enumerate(config["groups"]):
                 limited_samples[group["leader"]] += int(limited_l[i])
                 for j,name in enumerate(group["followers"]):
@@ -155,7 +171,8 @@ def simulate(config,duration,dt,out=None,session_id="offline",sample_dt=.02,appl
                             "position":position,"velocity":velocity,"acceleration_estimate":acceleration,
                             "acceleration_valid":kind=="uav","input_raw":command,"input_applied":applied_command,
                             "controller":controller,"limited":limited,"start_offset_s":0.0,"dt":dt,
-                            "healthy":True,"pose_stamp":t,"velocity_stamp":t}
+                            "healthy":True,"pose_stamp":t,"velocity_stamp":t,
+                            "safety":safety_diagnostics.get(name,{"enabled":False,"active":False})}
                         logfile.write(json.dumps(jsonable(row),allow_nan=False)+"\n")
             if t >= duration-1e-10:
                 break
@@ -182,11 +199,13 @@ def simulate(config,duration,dt,out=None,session_id="offline",sample_dt=.02,appl
                 "formation_position_error_max_m":float(np.linalg.norm(position_error,axis=-1).max()),
                 "formation_velocity_error_max_m_s":float(np.linalg.norm(velocity_error,axis=-1).max()),
                 "peak_alpha":alpha_max,"peak_beta":beta_max,"final_xl":xl.tolist(),"final_xf":xf.tolist(),
-                "apply_limits":bool(apply_limits),"limited_output_samples_per_agent":limited_samples,
+                "apply_limits":bool(apply_limits),"safety_enabled":safety.enabled,
+                "limited_output_samples_per_agent":limited_samples,
                 "maximum_uav_speed_m_s":max_uav_speed,"uav_speed_limit_violation_samples":speed_violation_samples,
-                "limit_semantics":"UGV planar speed and UAV planar acceleration command norms are clipped only when apply_limits=true. "
+                "limit_semantics":"Nominal UGV speed/UAV acceleration commands are clipped when apply_limits=true; "
+                    "an enabled safety filter additionally enforces its acceleration/predicted-speed limits regardless of that flag. "
                     "UAV speed is measured/reported, never changed by clipping the physical velocity state.",
-                "interpretation":"Ideal sampled plant with same local controller classes; no ROS, firmware, localization noise or actuator dynamics. "
+                "interpretation":"Ideal sampled plant with same local controllers and optional safety filter; no ROS, firmware, localization noise or actuator dynamics. "
                     "Optional command saturation is explicit; sample/hold discretization can produce a finite circular tracking residual."}
     finally:
         if logfile:

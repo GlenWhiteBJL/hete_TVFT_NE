@@ -1,0 +1,240 @@
+{
+  "reported_date_shanghai": "2026-11-04",
+  "branch": "PX4_sim",
+  "unit_tests_passed": 107,
+  "scope": "SSS adapted PX4 modules, true-state feedback; no hardware flight or full firmware SITL",
+  "final_version_verification": "80 s random-delay run and 30 s opposed-motion run after including vertical acceleration error in UGV margin",
+  "cases": [
+    {
+      "case": "normal_80s",
+      "run_directory": "output/sss_run_JvuCBylM",
+      "session_id": "20261103_184427_965347_1",
+      "requested_duration_s": 80.0,
+      "workflow_success": true,
+      "error": null,
+      "minimum_group_uav_xy_m": [
+        0.9943877298348728,
+        0.9763408312776259,
+        0.9616793598292012
+      ],
+      "safety_distance_m": 0.45,
+      "total_formal_safety_active_samples": 0,
+      "maximum_formal_solve_ms": 2.8367369959596545,
+      "maximum_tail_formation_position_error_m": 0.0012802010412290752,
+      "maximum_tail_formation_velocity_error_m_s": 0.000447225396820569,
+      "plot": "output/sss_run_JvuCBylM/picture/20261103_184427_965347_1/14_intra_group_distances.png",
+      "telemetry_sha256": "36154da7bfddfb267e1045946c89d9d45b8733f93afbda6a69ad0c26f516554a"
+    },
+    {
+      "case": "normal_delay_50ms_std15ms_80s",
+      "run_directory": "output/sss_run_hmdLa5Vf",
+      "session_id": "20261103_185038_341523_1",
+      "requested_duration_s": 80.0,
+      "workflow_success": true,
+      "error": null,
+      "minimum_group_uav_xy_m": [
+        0.9933459612032448,
+        0.9772307094056787,
+        0.9577872240627625
+      ],
+      "safety_distance_m": 0.45,
+      "total_formal_safety_active_samples": 0,
+      "maximum_formal_solve_ms": 2.816648004227318,
+      "maximum_tail_formation_position_error_m": 0.0013769718391522592,
+      "maximum_tail_formation_velocity_error_m_s": 0.000333689441075968,
+      "plot": "output/sss_run_hmdLa5Vf/picture/20261103_185038_341523_1/14_intra_group_distances.png",
+      "telemetry_sha256": "ac0728b68cb7108f8b1ade2cac750d6fe9f6ace84fdbd7ed6bbdb0ac047e9625"
+    },
+    {
+      "case": "opposed_motion_80s",
+      "run_directory": "output/sss_run_0CUxEU2G",
+      "session_id": "20261103_184639_707711_1",
+      "requested_duration_s": 80.0,
+      "workflow_success": true,
+      "error": null,
+      "minimum_group_uav_xy_m": [
+        0.5449272333958332,
+        0.5442015625106494,
+        0.5398854833803991
+      ],
+      "safety_distance_m": 0.45,
+      "total_formal_safety_active_samples": 1217,
+      "maximum_formal_solve_ms": 3.357580993906595,
+      "maximum_tail_formation_position_error_m": 0.0011479891665124695,
+      "maximum_tail_formation_velocity_error_m_s": 0.00023557134707253115,
+      "plot": "output/sss_run_0CUxEU2G/picture/20261103_184639_707711_1/14_intra_group_distances.png",
+      "telemetry_sha256": "12ed1826029e27060eca4d3a8658289c8d30535f813694e1f6a1963651dedc00"
+    },
+    {
+      "case": "opposed_motion_final_30s",
+      "run_directory": "output/sss_run_Q4i2S03X",
+      "session_id": "20261104_011711_219790_1",
+      "requested_duration_s": 30.0,
+      "workflow_success": true,
+      "error": null,
+      "minimum_group_uav_xy_m": [
+        0.5450401806001698,
+        0.5442174147521315,
+        0.5399024823648437
+      ],
+      "safety_distance_m": 0.45,
+      "total_formal_safety_active_samples": 1218,
+      "maximum_formal_solve_ms": 2.009833013289608,
+      "maximum_tail_formation_position_error_m": 0.012527725305528429,
+      "maximum_tail_formation_velocity_error_m_s": 0.004709717864330943,
+      "plot": "output/sss_run_Q4i2S03X/picture/20261104_011711_219790_1/14_intra_group_distances.png",
+      "telemetry_sha256": "7f1ebd428c56c3c71a6d8708bd85d5e94fd2fb0f95c8e01e33515569521d0ff0"
+    },
+    {
+      "case": "opposed_motion_safety_off_requested_30s",
+      "run_directory": "output/sss_run_1VSDMSge",
+      "session_id": "20261103_184911_029345_1",
+      "requested_duration_s": 30.0,
+      "workflow_success": false,
+      "error": "SmokeFailure: Agent fault: uav1: UAV horizontal speed limit exceeded",
+      "minimum_group_uav_xy_m": [
+        0.04995809507349751,
+        0.12846707246047565,
+        0.016333256841688997
+      ],
+      "safety_distance_m": 0.45,
+      "total_formal_safety_active_samples": 0,
+      "maximum_formal_solve_ms": 0.0,
+      "maximum_tail_formation_position_error_m": 0.9789392521889503,
+      "maximum_tail_formation_velocity_error_m_s": 0.6218410252219261,
+      "plot": "output/sss_run_1VSDMSge/picture/20261103_184911_029345_1/14_intra_group_distances.png",
+      "telemetry_sha256": "be1a5eddd9403d8d678c21f3caf7286410b907dfda5a6e3b6ee9c2ba3bc6c054",
+      "first_recorded_fault": {
+        "agent": "uav5",
+        "tau_s": 13.209999999999999,
+        "reason": "UAV horizontal speed limit exceeded"
+      }
+    }
+  ],
+  "mock_regression": {
+    "success": true,
+    "ros_runtime_executed": true,
+    "steps": [
+      {
+        "command": 1,
+        "completed_phase": "READY",
+        "ros_stamp": 1793703214.630833,
+        "session_id": ""
+      },
+      {
+        "command": 2,
+        "completed_phase": "ARMED",
+        "ros_stamp": 1793703217.6810653,
+        "session_id": ""
+      },
+      {
+        "command": 3,
+        "completed_phase": "AIRBORNE",
+        "ros_stamp": 1793703224.9308367,
+        "session_id": ""
+      },
+      {
+        "command": 4,
+        "completed_phase": "POSITIONED",
+        "ros_stamp": 1793703225.5808265,
+        "session_id": ""
+      },
+      {
+        "command": 5,
+        "completed_phase": "RUNNING",
+        "ros_stamp": 1793703225.9308636,
+        "session_id": "20261103_185345_591158_1"
+      },
+      {
+        "command": 6,
+        "completed_phase": "STOPPED",
+        "ros_stamp": 1793703240.4808574,
+        "session_id": "20261103_185345_591158_1"
+      },
+      {
+        "command": 7,
+        "completed_phase": "LANDED",
+        "ros_stamp": 1793703250.0808845,
+        "session_id": "20261103_185345_591158_1"
+      }
+    ],
+    "verification_scope": "ROS Noetic mock fleet with ideal integrators; not PX4 SITL or hardware",
+    "started_at": "2026-11-03T10:53:33.785762+00:00",
+    "requested_duration_s": 12.0,
+    "mock_graph_verified": true,
+    "session_id": "20261103_185345_591158_1",
+    "t0": 1793703227.8809142,
+    "session_directory": "/home/xgc_ws/src/hete_TVFT_NE/output/mock_safety_bYesGgJp/output/20261103_185345_591158_1",
+    "recording_validation": {
+      "telemetry_records": 8218,
+      "formal_counts": {
+        "ugv1": 603,
+        "uav1": 602,
+        "uav2": 603,
+        "ugv2": 603,
+        "uav3": 603,
+        "uav4": 603,
+        "ugv3": 602,
+        "uav5": 602,
+        "uav6": 603
+      },
+      "formal_span_s": {
+        "ugv1": 12.040014028549194,
+        "uav1": 12.020031929016113,
+        "uav2": 12.039992809295654,
+        "ugv2": 12.039965152740479,
+        "uav3": 12.040121078491211,
+        "uav4": 12.040011405944824,
+        "ugv3": 12.019996643066406,
+        "uav5": 12.01995849609375,
+        "uav6": 12.039768695831299
+      },
+      "bag_message_count": 56470,
+      "start_offset_s": {
+        "ugv1": 0.0007424354553222656,
+        "uav2": 0.002536773681640625,
+        "uav6": 0.007332563400268555,
+        "uav4": 0.008915185928344727,
+        "ugv2": 0.009381532669067383,
+        "uav3": 0.009644508361816406,
+        "ugv3": 0.010833263397216797,
+        "uav1": 0.013525009155273438,
+        "uav5": 0.015143871307373047
+      },
+      "max_start_offset_s": 0.015143871307373047,
+      "bag_formal_counts": {
+        "ugv1": 603,
+        "uav1": 602,
+        "uav2": 603,
+        "ugv2": 603,
+        "uav3": 603,
+        "uav4": 603,
+        "ugv3": 602,
+        "uav5": 602,
+        "uav6": 603
+      },
+      "bag_formal_agents": [
+        "uav1",
+        "uav2",
+        "uav3",
+        "uav4",
+        "uav5",
+        "uav6",
+        "ugv1",
+        "ugv2",
+        "ugv3"
+      ],
+      "recording_complete": true
+    },
+    "finished_at": "2026-11-03T10:54:10.693240+00:00"
+  },
+  "comparison_plot": "output/safety_validation_20261104/safety_on_off_comparison.png",
+  "final_source_sha256": {
+    "src/ne_tvft/safety.py": "d6bb0467047c979b7cb0a87a7c6d5a9a52007f1d4b5bbc8c6c1476896bfb7a4b",
+    "src/ne_tvft/safety_ros.py": "ceb4a63a1e031158937f0890a66545242a33e0de645eab29bee295f3835fac52",
+    "src/ne_tvft/agent_node.py": "3a37a8391fb586b3d9da28d43f72ef00cecda1dd6af1ad75f9c596ff4f153813",
+    "scripts/analyze_experiment.py": "a699956b415af9d0735ec709c189c5fecefa929aca0235630970180d11437b4b",
+    "config/sss_experiment.yaml": "77a76e12ba35323e223cc3522a14034308b203788cae557bd4fed79df16deb61",
+    "config/sss_safety_challenge.yaml": "73529dbd1b8c23721d444297b8232664575ba1ef9799fa668e14f20820f34c4f"
+  }
+}

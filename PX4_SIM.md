@@ -1,6 +1,8 @@
 # PX4_sim 使用手册：三车六机 NE / TVFT 闭环仿真
 
-适用分支：`PX4_sim`。本文按该分支的 launch、YAML 和 Python 实现整理，更新于 2026-11-03。已有运行结果单独保存在 [PX4_SIM_RESULTS.md](PX4_SIM_RESULTS.md)，本文说明如何启动、操作、改参数和检查数据。
+适用分支：`PX4_sim`。本文按该分支的 launch、YAML 和 Python 实现整理，更新于 2026-11-04。当前避碰版本的结果见 [PX4_SAFETY_RESULTS.md](PX4_SAFETY_RESULTS.md)；最初接入版本的历史结果见 [PX4_SIM_RESULTS.md](PX4_SIM_RESULTS.md)。本文说明如何启动、操作、改参数和检查数据。
+
+当前默认已加入组内避碰，半径改为 0.50 m、车速上限 0.15 m/s、机速故障阈值 0.30 m/s。保护范围、接入方式和对照测试见 [PX4_SAFETY.md](PX4_SAFETY.md)。
 
 ## 目录
 
@@ -88,6 +90,7 @@ rostopic echo /ne_tvft/session
 | `open_rviz` | `true` | 显示九台机器人及轨迹 |
 | `open_clock_ui` | `false` | 显示平台时钟面板 |
 | `max_speed_ratio` | `1` | 平台仿真速度倍率上限 |
+| `enable_safety` | `true` | 启用组内安全过滤与位置参考保护 |
 | `config` | 包内 `config/sss_experiment.yaml` | 实验参数文件 |
 | `communication` | 包内 `config/communication_none.yaml` | 通信时延配置覆盖文件 |
 | `output_root` | 包内 `output` | 原始记录根目录 |
@@ -121,6 +124,8 @@ roslaunch ne_tvft_experiment sss.launch \
 
 配置按“实验 YAML → topics YAML → communication YAML → launch 中记录路径”顺序加载到 `/ne_tvft/config`。最后一项路径覆盖 YAML 的 logging 根目录。
 
+`enable_safety` 也会在 YAML 加载后覆盖 `/ne_tvft/config/safety/enabled`。因此在 `sss.launch` 中仅把磁盘 YAML 的 `enabled` 改为 false 不会关闭过滤器，需显式传 `enable_safety:=false`。直接使用 `experiment.launch` 组合平台时，启用安全层则需传 `enable_safety:=true` 并加载含完整 safety 参数的配置。
+
 ### 3.3 一键隔离闭环测试
 
 ```bash
@@ -136,6 +141,32 @@ NE_TVFT_OPEN_RVIZ=true bash scripts/run_sss_test.sh 80
 第一个参数是正式控制时长，单位秒，不包含准备、起飞和降落时间；第二个参数是 `config/` 下的通信配置文件名。脚本启动独立的回环地址 ROS master，自动执行指令 1–7，检查阶段、正式段数据、起始偏差、记录与降落反馈，再运行分析程序。失败返回非零并保留日志；脚本会尝试停止、降落及清理其启动的进程。
 
 测试持续时间应小于默认 `max_run_seconds=120`，或先为更长实验同步修改该参数。一键脚本会自行 source `sss_experiment_ws`，但仍应在检出 `PX4_sim` 后执行。
+
+### 3.4 避碰开关、相向测试与复现
+
+正常入口使用 `sss_experiment.yaml`，默认开启组内安全层。`sss_safety_challenge.yaml` 是专用 SSS 验证配置：正式段 8–12 s 覆盖名义输入，让同组两机相向接近，之后恢复原控制。该配置使用 0.60 m/s 的速度故障阈值，正常配置仍为 0.30 m/s。完整参数及阶段保护范围见 [PX4_SAFETY.md](PX4_SAFETY.md)。
+
+| 用途 | 容器内命令 |
+|---|---|
+| 正常完整场景 | `roslaunch ne_tvft_experiment sss.launch` |
+| 手动关闭安全层作仿真对照 | `roslaunch ne_tvft_experiment sss.launch enable_safety:=false` |
+| 自动正常测试 | `bash scripts/run_sss_test.sh 80` |
+| 自动随机时延测试 | `bash scripts/run_sss_test.sh 80 communication_normal.yaml` |
+
+```bash
+# 自动相向接近，包含指令 1–7 与分析
+NE_TVFT_SSS_CONFIG=/home/xgc_ws/src/hete_TVFT_NE/config/sss_safety_challenge.yaml \
+  bash scripts/run_sss_test.sh 80
+
+# 同一相向输入关闭安全层：预期可能违反距离并故障退出
+NE_TVFT_SAFETY=false \
+NE_TVFT_SSS_CONFIG=/home/xgc_ws/src/hete_TVFT_NE/config/sss_safety_challenge.yaml \
+  bash scripts/run_sss_test.sh 30
+```
+
+脚本还读取 `NE_TVFT_OPEN_RVIZ`（默认 false）、`NE_TVFT_SSS_CONFIG`（默认正常配置的绝对路径）和 `NE_TVFT_SAFETY`（默认 true）。人工相向输入只允许在 SSS backend 使用，不能把挑战配置作为实机任务配置。
+
+一键脚本失败时保留目录并返回非零，不自动生成分析。若会话已有有效正式段，可手动对该目录运行第 12 节的分析命令；故障退出后的短记录不能当作请求时长的完整通过结果。
 
 ## 4. 指令与状态机
 
@@ -179,6 +210,8 @@ flowchart LR
 
 **SSS 降落适配。** 上游没有完整 Navigator 的 AUTO.LAND 任务，SSS 后端以 `simulation.landing_speed=0.2 m/s` 下降位置参考。解除解锁需要新鲜的 `landed_state=1`、高度不超过 `ground_z + 0.05 m`、低速及健康反馈；服务返回成功本身不代表阶段完成。硬件后端的 AUTO.LAND 路径与此不同。
 
+开启安全层后，指令 7 先在原高度移至车外侧的安全下降通道，水平条件满足后才下降。正式段采用加速度过滤；起飞与初始点转移保留原位置接口，通过几何检查拒绝危险参考，不会自动规划绕行。故障原因以遥测的 `fault_reason`、`safety.reason` 为准。
+
 ## 5. ROS 话题、服务与坐标系
 
 以下是 `sss.launch` 的实际名称，无 `/mock` 前缀。`N` 表示对应实体编号；话题方向以实验节点为参照。反馈坐标使用世界系 `map`，数值为 ROS ENU：x 东、y 北、z 上。
@@ -218,7 +251,7 @@ UAV 的 PositionTarget 使用 `coordinate_frame=1`（`FRAME_LOCAL_NED` 枚举）
 | 制动 | `2503` | velocity + yaw |
 | 正式 NE / TVFT 跟随 | `2111` | acceleration_or_force + yaw，以加速度方式使用 |
 
-正式段水平加速度来自 TVFT，竖直加速度来自高度 PD，不额外添加重力。上游 `velocity_local.header.frame_id` 标为 `base_link`，但源码发布的是转换后的 ENU 数值；当前 `velocity_frame: world` 按此数值语义使用，没有再次旋转成世界系。
+正式段水平名义加速度来自 TVFT，启用安全层后经过过滤得到最终输入；竖直加速度来自高度 PD，不额外添加重力。上游 `velocity_local.header.frame_id` 标为 `base_link`，但源码发布的是转换后的 ENU 数值；当前 `velocity_frame: world` 按此数值语义使用，没有再次旋转成世界系。
 
 ### 5.3 实验协议与时钟
 
@@ -234,7 +267,7 @@ UAV 的 PositionTarget 使用 `coordinate_frame=1`（`FRAME_LOCAL_NED` 枚举）
 | `/clock` | `rosgraph_msgs/Clock` | 平台统一 ROS 仿真时间 |
 | `/sss_time_client/update_clock_request` | `sss_sim_env/TimeRequest` | 注册的时间客户端请求推进至下一回调时刻 |
 
-JSON 协议版本为 `version: 1`。agent 遥测包含 `id/group/role/phase/healthy/ready`、位置速度、控制器内部量、原始/实际输入、限幅标志、setpoint、`start_offset`、backend 和通信诊断等。控制器只消费拓扑允许的 `/ne_tvft/signal/*`，不从全局遥测获取其他非邻居的真实状态。
+JSON 协议版本为 `version: 1`。agent 遥测包含 `id/group/role/phase/healthy/ready`、位置速度、控制器内部量、原始/实际输入、限幅标志、setpoint、`start_offset`、backend 和通信诊断等。原 NE/TVFT 控制器只消费拓扑允许的 `/ne_tvft/signal/*`；安全层另直接订阅同组实体的真实位姿和速度，不经过算法时延队列。
 
 平台还提供 `/sss_timeclient_register`（`sss_sim_env/ClientRegister`）、`/sss_timeclient_unregister`（`sss_sim_env/ClientUnregister`）、`/sss_clock_control`（`sss_sim_env/SimClockControl`）。这些是平台时钟接口，正常运行由程序管理。
 
@@ -244,9 +277,9 @@ RViz 使用 `/tf`、`/tf_static` 和各机器人命名空间中的 `joint_states
 
 | 组 | UGV / 初始 XY，m | 第一架 UAV / 初始 XY，m | 第二架 UAV / 初始 XY，m | UAV 高度，m |
 |---|---|---|---|---:|
-| 1 | ugv1 / `(-1.6, -1.4)` | uav1 / `(-1.25, -1.4)` | uav2 / `(-1.95, -1.4)` | 1.2 |
-| 2 | ugv2 / `(1.6, -1.4)` | uav3 / `(1.95, -1.4)` | uav4 / `(1.25, -1.4)` | 1.2 |
-| 3 | ugv3 / `(0, 1.6)` | uav5 / `(0.35, 1.6)` | uav6 / `(-0.35, 1.6)` | 1.2 |
+| 1 | ugv1 / `(-1.6, -1.4)` | uav1 / `(-1.10, -1.4)` | uav2 / `(-2.10, -1.4)` | 1.2 |
+| 2 | ugv2 / `(1.6, -1.4)` | uav3 / `(2.10, -1.4)` | uav4 / `(1.10, -1.4)` | 1.2 |
+| 3 | ugv3 / `(0, 1.6)` | uav5 / `(0.50, 1.6)` | uav6 / `(-0.50, 1.6)` | 1.2 |
 
 表中 UAV 初始点是指令 4 的目标，即 `groups[i].initial_xy + h_ij(0)`，Z 为该组 `altitude`。默认 launch 的出生 XY 恰好与这些值一致，但所有实体出生 Z 为 0。
 
@@ -291,13 +324,13 @@ $$
 
 | YAML 参数 | 默认值 | 含义 |
 |---|---|---|
-| `formation.radii` | `[0.35, 0.35, 0.35]` | 三组半径，m；须为正 |
+| `formation.radii` | `[0.50, 0.50, 0.50]` | 三组半径，m；须为正 |
 | `formation.angular_rates` | `[0.1, 0.1, 0.1]` | 三组角速度，rad/s；正值按 ENU 平面逆时针 |
 | `formation.phases` | `[0, 0, 0]` | 每组第一架 UAV 的初始相位，rad |
 | `groups[i].initial_xy` | 见第 6 节 | 第 i 组 UGV 的正式初始点，m |
 | `groups[i].altitude` | `1.2` | 第 i 组 UAV 的世界 Z 目标，m |
 
-默认周期约 `62.83 s`，相对切向速度 `rω=0.035 m/s`，相对向心加速度 `rω²=0.0035 m/s²`。这些值只描述相对参考，不包含领导者平移和跟踪暂态。
+默认周期约 `62.83 s`，相对切向速度 `rω=0.050 m/s`，相对向心加速度 `rω²=0.0050 m/s²`。这些值只描述相对参考，不包含领导者平移和跟踪暂态。
 
 半径和角速度从 `τ=0` 起保持常量，没有角速度爬升或编队过渡时间。指令 4 的悬停初始速度接近零，正式参考在 `τ=0` 已有非零切向速度，这一启动暂态会进入记录。
 
@@ -422,14 +455,14 @@ $$
 
 | `limits` 字段 | 默认值 | 实际含义 |
 |---|---:|---|
-| `ugv_speed` | 0.3 m/s | 平面速度向量范数限幅 |
+| `ugv_speed` | 0.15 m/s | 平面速度向量范数限幅 |
 | `uav_acceleration` | 0.8 m/s² | 水平加速度向量范数限幅 |
-| `uav_speed` | 0.6 m/s | 正式段实测水平速度超过此值进入故障，不是参考速度裁剪 |
+| `uav_speed` | 0.30 m/s | 正式段实测水平速度超过此值进入故障，不是参考速度裁剪 |
 | `z_acceleration` | 0.6 m/s² | 正式段竖直 PD 加速度限幅 ±0.6 |
 | `altitude_kp` | 1.0 | 高度比例增益 |
 | `altitude_kd` | 1.5 | 竖直速度阻尼 |
 
-正式段 `a_z = clip(kp·(z_des-z) - kd·v_z, ±z_acceleration)`。记录中的 `input_raw`、`input_applied` 和 `limited` 用于区分原始控制与限幅后的命令；不能只看理论控制量判断执行效果。当前控制没有另行加入障碍物避让、硬机间距约束或地图边界投影。
+正式段 `a_z = clip(kp·(z_des-z) - kd·v_z, ±z_acceleration)`。`input_raw` 与 `input_applied` 区分原始控制与最终命令；`limited` 标记名义限幅或安全修正，需结合 `safety.active` 区分原因。当前另有组内安全过滤与参考保护，详见 [PX4_SAFETY.md](PX4_SAFETY.md)；不包含组间、其他障碍物或地图边界约束。
 
 ### 10.2 `runtime` 主要参数
 
@@ -534,7 +567,7 @@ python3 scripts/analyze_experiment.py \
 
 手动 launch 不自动执行分析；一键脚本在检查通过后自动执行。分析参数包括 `--max-gap`（默认 0.1 s）、`--tail-seconds`（10 s）、`--position-threshold`（0.05 m）、`--velocity-threshold`（0.05 m/s）。它们是离线分析阈值，不是状态机的就绪容差或运行时看门狗。
 
-输出包含 `metrics.json`、`analysis_config.json`、`summary.md` 和 13 组 PNG：轨迹、领导者诊断、相对圆周、半径/相位/角速度、编队误差、自适应增益、输入限幅、运动加速度与原始 IMU、时序与数据质量、UAV 间距、编队快照、速度/高度及自适应增益差。
+输出包含 `metrics.json`、`analysis_config.json`、`summary.md` 和 14 组 PNG：轨迹、领导者诊断、相对圆周、半径/相位/角速度、编队误差、自适应增益、输入限幅、运动加速度与原始 IMU、时序与数据质量、UAV 间距、编队快照、速度/高度及自适应增益差，另有第 14 张组内个体距离图。
 
 检查实验应同时看：状态是否完整结束、九台节点正式段是否齐全、`start_offset`、故障/限幅/记录质量、leader 到离线 NE 的误差、follower 相对本车的 `x_uav-x_ugv-h` 误差及速度误差。不能仅凭 RViz 轨迹形状或一张误差曲线认定整个实验成功。
 
@@ -584,9 +617,12 @@ agent 在非正式阶段也会发送保持参考；额外的 `rostopic pub`、�
 | agent 阶段执行、反馈与服务 | [src/ne_tvft/agent_node.py](src/ne_tvft/agent_node.py) |
 | 坐标变换、掩码与限幅 | [src/ne_tvft/adapters.py](src/ne_tvft/adapters.py) |
 | SSS 时钟与时延接收队列 | [src/ne_tvft/sss.py](src/ne_tvft/sss.py)、[src/ne_tvft/communication.py](src/ne_tvft/communication.py) |
+| 组内安全过滤与阶段适配 | [src/ne_tvft/safety.py](src/ne_tvft/safety.py)、[src/ne_tvft/safety_ros.py](src/ne_tvft/safety_ros.py) |
 | 记录与独立分析 | [scripts/recorder_node.py](scripts/recorder_node.py)、[src/ne_tvft/recording.py](src/ne_tvft/recording.py)、[scripts/analyze_experiment.py](scripts/analyze_experiment.py) |
 | 安装与隔离测试 | [scripts/setup_sss_workspace.sh](scripts/setup_sss_workspace.sh)、[scripts/run_sss_test.sh](scripts/run_sss_test.sh)、[scripts/smoke_sss.py](scripts/smoke_sss.py) |
 
-已有 `PX4_sim` 验证记录包含 98 项单元测试、mock 回归，以及 80 s 无额外时延、固定 50 ms、50±15 ms 截断正态时延的 SSS 闭环，详见 [PX4_SIM_RESULTS.md](PX4_SIM_RESULTS.md) 与 [integration/validation_20261102.json](integration/validation_20261102.json)。
+当前避碰版本完成 107 项单元测试、12 s 原 mock 回归、80 s 随机时延和相向接近等闭环验证；关闭避碰的相向对照被如实记录为故障退出，详见 [PX4_SAFETY_RESULTS.md](PX4_SAFETY_RESULTS.md) 与 [integration/validation_safety_20261104.json](integration/validation_safety_20261104.json)。
+
+最初接入版本的历史记录包含 98 项单元测试及三次 80 s SSS 闭环，见 [PX4_SIM_RESULTS.md](PX4_SIM_RESULTS.md)。它使用当时的 0.35 m 半径等配置，不应与当前 0.50 m 避碰配置混作同一组实验。
 
 这些结果验证对应配置下的实现与仿真行为，不替代数学定理证明、完整 PX4 固件 SITL 验证或实机飞行验证。当前硬件核验开关保持 false。

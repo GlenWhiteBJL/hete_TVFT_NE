@@ -2,6 +2,7 @@
   <arg name="mock" default="true"/>
   <arg name="allow_hardware" default="false"/>
   <arg name="backend" default="auto"/>
+  <arg name="enable_safety" default="false"/>
   <arg name="communication" default="$(find ne_tvft_experiment)/config/communication_none.yaml"/>
   <arg name="config" default="$(find ne_tvft_experiment)/config/experiment.yaml"/>
   <arg name="topics" default="$(find ne_tvft_experiment)/config/topics.yaml"/>
@@ -10,6 +11,7 @@
   <rosparam command="load" file="$(arg config)" ns="/ne_tvft/config"/>
   <rosparam command="load" file="$(arg topics)" ns="/ne_tvft/config"/>
   <rosparam command="load" file="$(arg communication)" ns="/ne_tvft/config"/>
+  <param name="/ne_tvft/config/safety/enabled" value="$(arg enable_safety)" type="bool"/>
   <param name="/ne_tvft/config/logging/output_root" value="$(arg output_root)"/>
   <param name="/ne_tvft/config/logging/picture_root" value="$(arg picture_root)"/>
   <node pkg="ne_tvft_experiment" type="supervisor_node.py" name="supervisor" output="screen" required="true"/>

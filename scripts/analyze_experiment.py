@@ -109,6 +109,32 @@ def load_session(directory):
     return metadata, all_records, malformed
 
 
+def intra_group_series(records, group, t0, max_gap=.1):
+    """All recorded phases; nearest matches beyond max_gap stay NaN."""
+    names = [group["leader"]]+group["followers"]
+    rows = {n: sorted([r for r in records if r.get("id") == n], key=lambda r: r["stamp"])
+            for n in names}
+    anchor = rows[names[1]]
+    stamps = np.array([r["stamp"] for r in anchor])
+    positions = {}
+    active = np.zeros(len(stamps), dtype=bool)
+    for n in names:
+        source = rows[n]
+        indices = nearest_indices(stamps, [r["stamp"] for r in source], max_gap)
+        p = np.full((len(stamps), 3), np.nan)
+        valid = indices >= 0
+        if source and valid.any():
+            p[valid] = np.stack([finite_vector(source[k].get("position")) for k in indices[valid]])
+            active[valid] |= np.array([bool(source[k].get("safety", {}).get("active", False)) for k in indices[valid]])
+        positions[n] = p
+    distances = {}
+    for first, second in [(names[1], names[2]), (names[1], names[0]), (names[2], names[0])]:
+        delta = positions[first]-positions[second]
+        distances[first+"--"+second] = {"distance_3d": np.linalg.norm(delta, axis=1),
+                                        "distance_xy": np.linalg.norm(delta[:, :2], axis=1)}
+    return {"t": stamps-float(t0), "pairs": distances, "active": active}
+
+
 def analyze(directory, picture_root=None, max_gap=.1, tail_seconds=10,
             position_threshold=.05, velocity_threshold=.05):
     import matplotlib
@@ -474,6 +500,41 @@ def analyze(directory, picture_root=None, max_gap=.1, tail_seconds=10,
             axgap[i, j].legend(fontsize=7)
     save(fig, "12_velocity_and_altitude")
     save(figgap, "13_adaptive_gain_differences")
+    # Complete pair list, including both UAV--UGV distances. This diagnostic
+    # includes recorded prepare/stop tails, unlike the formal tracking metrics.
+    fig, axes = plt.subplots(len(groups), 1, figsize=(11, 3.1*len(groups)), squeeze=False, constrained_layout=True)
+    safety_distance = float(config.get("safety", {}).get("uav_min_distance", .45))
+    metrics["intra_group_distances"] = {}
+    for i, group in enumerate(groups):
+        series = intra_group_series([r for r in all_records if r.get("session_id", sid) == sid], group, t0, max_gap)
+        ax, group_metrics = axes[i, 0], {}
+        for j, (pair, data) in enumerate(series["pairs"].items()):
+            ax.plot(series["t"], data["distance_3d"], color=colors[j], lw=1.2, label=pair+" (3D)")
+            group_metrics[pair] = {"minimum_3d_m": float(np.nanmin(data["distance_3d"])) if np.isfinite(data["distance_3d"]).any() else None,
+                                  "minimum_xy_m": float(np.nanmin(data["distance_xy"])) if np.isfinite(data["distance_xy"]).any() else None,
+                                  "missing_matches": int((~np.isfinite(data["distance_3d"])).sum())}
+            if j == 0:
+                ax.plot(series["t"], data["distance_xy"], ls=":", color=colors[j], lw=1, label=pair+" (XY)")
+                group_metrics[pair]["xy_below_safety_distance_samples"] = int(np.count_nonzero(data["distance_xy"] < safety_distance-1e-3))
+        if config.get("safety", {}).get("enabled", False):
+            ax.axhline(safety_distance, color="black", ls="--", lw=1, label="UAV--UAV XY minimum")
+        if len(series["t"]):
+            ax.fill_between(series["t"], 0, 1, where=series["active"], transform=ax.get_xaxis_transform(),
+                            color="#ef4444", alpha=.10, label="Safety correction active")
+        ax.set(title="Group {}: recorded intra-group distances".format(i+1),
+               xlabel="Time from t0 (s); includes recorded stop tail", ylabel="Distance (m)")
+        ax.legend(fontsize=7, loc="upper left", bbox_to_anchor=(1.01, 1.))
+        metrics["intra_group_distances"][str(i)] = {"scope": "all recorded phases; no pre-recording coverage", "pairs": group_metrics}
+    save(fig, "14_intra_group_distances")
+    metrics["safety"] = {}
+    for name, records in raw.items():
+        samples = [r["safety"] for r in records if isinstance(r.get("safety"), dict)]
+        if samples:
+            metrics["safety"][name] = {"enabled": any(s.get("enabled", False) for s in samples),
+                "active_samples": sum(bool(s.get("active", False)) for s in samples),
+                "active_fraction": sum(bool(s.get("active", False)) for s in samples)/len(samples),
+                "maximum_correction_m_s2": max(float(s.get("correction_norm_m_s2", 0.)) for s in samples),
+                "maximum_solve_ms": 1000*max(float(s.get("solve_seconds", 0.)) for s in samples)}
     metrics["figures"] = figures
     metrics["interpretation"] = ("Only RUNNING samples with finite stamp >= t0 enter tracking metrics; elapsed time is stamp - t0. "
         "Unmatched peer samples are missing; no zero filling. Recorded IMU body specific force is distinct from world "
@@ -483,7 +544,7 @@ def analyze(directory, picture_root=None, max_gap=.1, tail_seconds=10,
     (output / "analysis_config.json").write_text(json.dumps({"max_gap": max_gap, "tail_seconds": tail_seconds,
         "position_threshold": position_threshold, "velocity_threshold": velocity_threshold}, indent=2)+"\n", encoding="utf-8")
     lines = ["# 实验数据分析", "", "实验目录：`{}`".format(sid), "",
-             "仅统计 RUNNING 状态且有限时间戳 stamp >= t0 的正式控制段，统计时间为 stamp - t0；停止尾段仅用于时序和数据质量展示。",
+             "跟踪指标仅统计 RUNNING 且 stamp >= t0；第 14 图及组内距离指标另包含已记录的准备/停止尾段，不包含记录开始前的全部起降。",
              "UAV 圆周误差使用相对本组 UGV 的实际位置与实际速度计算；缺失或超时匹配不填零。", "",
              "| 智能体 | 正式样本 | NE 或编队位置末段最大误差 (m) | 编队速度末段最大误差 (m/s) | 限幅比例 |",
              "|---|---:|---:|---:|---:|"]

@@ -1,6 +1,19 @@
 # 3 UGV + 6 UAV：环境监测 NE 与圆周 TVFT 实验
 
 本分支的完整使用手册见 [PX4_SIM.md](PX4_SIM.md)：安装与 launch、指令状态机、ROS 话题/服务、编队与控制参数、代价函数、时延配置、记录及分析。已有闭环结果见 [PX4_SIM_RESULTS.md](PX4_SIM_RESULTS.md)。
+组内避碰功能与新距离图见 [PX4_SAFETY.md](PX4_SAFETY.md)，当前 SSS 默认半径 0.50 m；下文原 mock 配置仍为 0.35 m。
+
+`PX4_sim` 当前使用入口：
+
+```bash
+# xgc 容器中；首次安装见 PX4_SIM.md
+cd /home/xgc_ws/src/hete_TVFT_NE
+source /home/xgc_ws/sss_experiment_ws/devel/setup.bash
+roslaunch ne_tvft_experiment sss.launch
+```
+
+默认开启组内避碰，UGV 速度上限 0.15 m/s、UAV 速度故障阈值 0.30 m/s。启动后按指令 1–7 分阶段操作；自动测试使用 `bash scripts/run_sss_test.sh 80`。避碰对照、人工相向输入、第 14 张组内距离图及失败记录说明见 [避碰使用说明](PX4_SAFETY.md)；107 项测试和闭环结果见 [当前验证报告](PX4_SAFETY_RESULTS.md)。
+
 本工程依据草稿第二、三章和“拟定技术方案”聊天中的实体配置实现。三台麦克纳姆轮无人车作为一阶领导者，六架无人机作为二阶跟随者；三个小队通过环境监测位置博弈选择工作位置，两架无人机相对本组车辆保持同半径、同角速度、相差 180 度的期望圆周运动。
 
 本次交付包含 ROS Noetic/catkin 工程、真实算法的离线动力学示例、ROS 接口模拟器、状态机、异步数据记录与独立分析程序。工程已在腾讯云 Ubuntu 24.04 宿主的 Ubuntu 20.04 / ROS Noetic Docker 环境中完成 catkin 编译并运行 ROS mock。云服务器用法见 [cloud/TENCENT_SERVER.md](cloud/TENCENT_SERVER.md)。本分支另已完成 swarm_sync_sim 的 PX4 模块与动力学闭环验证；完整 PX4 固件 SITL 和实物飞行尚未执行。
@@ -129,7 +142,7 @@ MAVROS ROS 接口接收 ENU 数值，并由 MAVROS 内部转换为 MAVLink NED�
 
 ### 无人机输出
 
-运行论文控制时，只启用 `PositionTarget.acceleration_or_force` 的三个加速度分量，`type_mask=2111`，FORCE 位关闭，偏航有效，坐标字段为 FRAME_LOCAL_NED（ROS 数据仍为 ENU）。水平为论文加速度，竖直为独立限幅 PD 高度控制产生的运动学加速度。不要额外加 g。
+运行论文控制时，只启用 `PositionTarget.acceleration_or_force` 的三个加速度分量，`type_mask=2111`，FORCE 位关闭，偏航有效，坐标字段为 FRAME_LOCAL_NED（ROS 数据仍为 ENU）。水平名义输入为论文加速度，启用安全层后经过过滤；竖直为独立限幅 PD 高度控制产生的运动学加速度。不要额外加 g。
 
 位置保持/起飞/到初始点使用 position-only；制动使用 velocity-only。输入限幅保留 raw/applied/limited 和实际 setpoint。超速触发退出控制，不以悄悄截断测得状态的方式冒充满足理论。限幅、采样和飞控内环使实物成为受限近似系统，必须由 SITL/单机测试验证。
 

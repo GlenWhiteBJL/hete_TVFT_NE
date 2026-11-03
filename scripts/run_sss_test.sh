@@ -36,6 +36,8 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 setsid roslaunch ne_tvft_experiment sss.launch "open_rviz:=${NE_TVFT_OPEN_RVIZ:-false}" \
+    "config:=${NE_TVFT_SSS_CONFIG:-$repo_root/config/sss_experiment.yaml}" \
+    "enable_safety:=${NE_TVFT_SAFETY:-true}" \
     "communication:=$repo_root/config/$profile" \
     "output_root:=$run_dir/output" "picture_root:=$run_dir/picture" \
     >"$run_dir/roslaunch.log" 2>&1 &

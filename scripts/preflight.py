@@ -8,6 +8,7 @@ import yaml
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
 from ne_tvft.core import MonitoringGame,validate_topology
 from ne_tvft.protocol import agent_ids
+from ne_tvft.safety import GroupSafety
 
 
 def main():
@@ -24,6 +25,7 @@ def main():
         raise ValueError('--hardware conflicts with --backend')
     c=yaml.safe_load(args.config.read_text());c.update(yaml.safe_load(args.topics.read_text()))
     validate_topology(c);game=MonitoringGame(c)
+    GroupSafety(c)
     ids=agent_ids(c)
     if set(ids)!=set(c['robots']):
         raise ValueError('Entity mapping and topic configuration differ')

@@ -44,7 +44,7 @@ def check_sss_graph(config, params, graph):
     return ids
 
 
-def validate_sss_inputs(directory, sid, t0, ids):
+def validate_sss_inputs(directory, sid, t0, ids, safety_enabled=False):
     """Check recorded control semantics independently of live readiness flags."""
     counts={rid:0 for rid in ids}
     max_dt=0.
@@ -61,10 +61,37 @@ def validate_sss_inputs(directory, sid, t0, ids):
                 target=p.get('setpoint',{})
                 if p.get('command_mode')!='acceleration' or target.get('type_mask')!=2111:
                     raise SmokeFailure('UAV formal control is not acceleration-only')
+                if safety_enabled:
+                    safety=p.get('safety',{})
+                    if safety.get('enabled') is not True or safety.get('healthy') is not True:
+                        raise SmokeFailure('Missing or unhealthy formal safety filter')
+                    margin=safety.get('minimum_constraint_margin')
+                    if not finite_number(margin) or margin < -1e-6:
+                        raise SmokeFailure('Formal safety optimization constraint violated')
             counts[p['id']]+=1
     if any(not n for n in counts.values()): raise SmokeFailure('An agent has no formal control samples')
     return {'formal_input_samples':counts,'maximum_control_dt_s':max_dt,
             'uav_type_mask':2111,'communication_clock':'ros'}
+
+
+def validate_group_distances(directory, config, t0):
+    from analyze_experiment import load_session,intra_group_series
+    import numpy as np
+    _,records,_=load_session(directory)
+    records=[p for p in records if p.get('phase')=='RUNNING' and p['stamp']>=t0]
+    report={}
+    minimum=float(config['safety']['uav_min_distance'])
+    for i,group in enumerate(config['groups']):
+        series=intra_group_series(records,group,t0,.05)
+        pair='--'.join(group['followers'])
+        distances=series['pairs'][pair]['distance_xy']
+        if not len(distances) or not np.isfinite(distances).all():
+            raise SmokeFailure('Incomplete measured group separation: '+pair)
+        measured=float(distances.min())
+        report[str(i)]={'minimum_measured_uav_xy_m':measured,'required_m':minimum}
+        if measured < minimum-1e-3:
+            raise SmokeFailure('Measured UAV separation below safety distance: '+pair+' '+str(measured))
+    return report
 
 
 def main():
@@ -132,7 +159,10 @@ def main():
         probe.wait('recording flush',lambda s,r,a:r is not None and r[0].get('closed') is True,35,ids=ids)
         command(7,'LANDED')
         report['recording_validation']=validate_recording(directory,sid,t0,ids,args.duration,config['runtime']['rate_hz'],backend='sss')
-        report['control_validation']=validate_sss_inputs(directory,sid,t0,ids)
+        safety_enabled=config.get('safety',{}).get('enabled',False)
+        report['control_validation']=validate_sss_inputs(directory,sid,t0,ids,safety_enabled)
+        if safety_enabled:
+            report['safety_validation']=validate_group_distances(directory,config,t0)
         _,_,telemetry=probe.snapshot()
         report['final_uav_states']={rid:{k:telemetry[rid][0].get(k) for k in ['position','fcu','landed_state']} for rid in ids if rid.startswith('uav')}
         report['success']=True
